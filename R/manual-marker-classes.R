@@ -1,20 +1,18 @@
 get_markers <- function(name) {
-    cell_marker_dataset[[name]]
+    manual_cell_marker_dataset[[name]]
 }
 
-cell_marker_dataset <- structure(
+manual_cell_marker_dataset <- structure(
     rlang::env(),
-    class = "cell_marker_dataset"
+    class = "manual_cell_marker_dataset"
 )
 
-#' @param x an `cell_marker_dataset` object
+#' @param x an `manual_cell_marker_dataset` object
 #' @param ... Not used currently
 #' @export
-#' @name cell_marker_dataset
-print.cell_marker_dataset <- function(x, ...) {
-    cat(sprintf(
-        "A total of %d cell markers sets", rlang::env_length(x)
-    ), sep = "\n")
+#' @name manual_cell_marker_dataset
+print.manual_cell_marker_dataset <- function(x, ...) {
+    cli::cli_text("A total of {rlang::env_length(x)} cell markers sets")
 }
 
 # convention: name should be the surname of the first author followed by the
@@ -23,10 +21,10 @@ new_marker_set <- function(name, main, ..., reference) {
     marker_set <- c(list(main = main), list(...))
     # every elements in ... should be named
     check_names(marker_set)
-    if (name %in% rlang::env_names(cell_marker_dataset)) {
-        stop("Existing cell markers found in datasets", call. = FALSE)
+    if (name %in% rlang::env_names(manual_cell_marker_dataset)) {
+        cli::cli_abort("Existing cell markers found in datasets")
     }
-    cell_marker_dataset[[name]] <- structure(
+    manual_cell_marker_dataset[[name]] <- structure(
         marker_set,
         class = "marker_set",
         reference = reference
@@ -43,10 +41,10 @@ check_names <- function(x) {
         # and then recall this function to check every elments
         is_right <- has_names(x) && all(vapply(x, check_names, logical(1L)))
     } else {
-        stop("all elements should be NULL or a list", call. = FALSE)
+        cli::cli_abort("all elements should be {.field NULL} or a {.field list}")
     }
     if (!is_right) {
-        stop("all elements or sub-elements should be named", call. = FALSE)
+        cli::cli_abort("all elements or sub-elements should be named")
     }
     is_right
 }
@@ -61,34 +59,33 @@ has_names <- function(x) {
 #' @name marker_set
 #' @export
 print.marker_set <- function(x, ...) {
-    cat(strwrap(
-        sprintf("Marker sets derived from: %s", attr(x, "reference")),
-        indent = 0, exdent = 2
-    ), sep = "\n")
-    cat("\n")
-    cat("Main cell types", sep = "\n")
+    cli::cli_text("Marker sets derived from: {.url {attr(x, \"reference\")}}")
+    cli::cat_line()
+    cli::cli_text("Main cell types")
     .mapply(
-        wrap_cat,
+        cli_list,
         list(
             label = names(x$main),
             items = x$main
         ),
-        MoreArgs = list(indent = 2, exdent = 4)
+        MoreArgs = NULL
     )
     subelemnts <- x[setdiff(names(x), "main")]
-    cat(sprintf(
-        "Including markers for %d %s",
-        length(subelemnts),
-        if (identical(length(subelemnts), 1L)) "sub-group" else "sub-groups"
-    ), sep = "\n")
+    cli::cat_line()
+    cli::cli_text("Including markers for {length(subelemnts)} sub-group{?s}")
     .mapply(
-        wrap_cat,
+        cli_list,
         list(
             label = names(subelemnts),
             items = lapply(subelemnts, names)
         ),
-        MoreArgs = list(indent = 2, exdent = 4)
+        MoreArgs = NULL
     )
+}
+
+cli_list <- function(label, items, sep = ": ") {
+    items <- cli::cli_vec(items, list("vec-trunc" = 5))
+    cli::cli_li("{.field {label}}{sep}{items}")
 }
 
 wrap_cat <- function(label, items, sep = ": ", collapse = ", ", indent = 0L, exdent = 2L) {

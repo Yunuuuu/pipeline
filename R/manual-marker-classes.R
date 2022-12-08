@@ -12,7 +12,7 @@ manual_cell_marker_dataset <- structure(
 #' @export
 #' @name manual_cell_marker_dataset
 print.manual_cell_marker_dataset <- function(x, ...) {
-    cli::cli_text("A total of {rlang::env_length(x)} cell markers sets")
+    cli::cli_text("A total of {rlang::env_length(x)} cell markers set{?s}")
 }
 
 # convention: name should be the surname of the first author followed by the
@@ -88,7 +88,6 @@ print.marker_set <- function(x, ...) {
         )
         cli::cli_end()
     }
-
     x
 }
 

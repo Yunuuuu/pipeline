@@ -3,7 +3,7 @@ get_markers <- function(name) {
 }
 
 manual_cell_marker_dataset <- structure(
-    rlang::env(),
+    rlang::new_environment(),
     class = "manual_cell_marker_dataset"
 )
 
@@ -40,8 +40,8 @@ check_names <- function(x) {
         # for a list, we should check all elements have names,
         # and then recall this function to check every elments
         is_right <- has_names(x) && all(vapply(x, check_names, logical(1L)))
-    } else {
-        cli::cli_abort("all elements should be {.field NULL} or a {.field list}")
+    } else if (!is.null(x)) {
+        cli::cli_abort("all elements should be {.field NULL}, or a {.cls list} or a {.cls chracter}")
     }
     if (!is_right) {
         cli::cli_abort("all elements or sub-elements should be named")
@@ -59,33 +59,46 @@ has_names <- function(x) {
 #' @name marker_set
 #' @export
 print.marker_set <- function(x, ...) {
-    cli::cli_text("Marker sets derived from: {.url {attr(x, \"reference\")}}")
-    cli::cat_line()
+    cli::cli_text("Cell marker set derived from: {.url {attr(x, \"reference\")}}")
+    cli::cli_rule("marker set details")
+    main_par_id <- cli::cli_par()
     cli::cli_text("Main cell types")
+    main_item_lid <- cli::cli_ul()
     .mapply(
         cli_list,
         list(
             label = names(x$main),
             items = x$main
         ),
-        MoreArgs = NULL
+        MoreArgs = list(add_num = FALSE)
     )
+    cli::cli_end(id = main_item_lid)
+    cli::cli_end(id = main_par_id)
     subelemnts <- x[setdiff(names(x), "main")]
-    cli::cat_line()
-    cli::cli_text("Including markers for {length(subelemnts)} sub-group{?s}")
-    .mapply(
-        cli_list,
-        list(
-            label = names(subelemnts),
-            items = lapply(subelemnts, names)
-        ),
-        MoreArgs = NULL
-    )
+    if (length(subelemnts)) {
+        cli::cli_ul()
+        cli::cli_text("Including markers for {length(subelemnts)} sub-group{?s}")
+        .mapply(
+            cli_list,
+            list(
+                label = names(subelemnts),
+                items = lapply(subelemnts, names)
+            ),
+            MoreArgs = NULL
+        )
+        cli::cli_end()
+    }
+
+    x
 }
 
-cli_list <- function(label, items, sep = ": ") {
-    items <- cli::cli_vec(items, list("vec-trunc" = 5))
-    cli::cli_li("{.field {label}}{sep}{items}")
+cli_list <- function(label, items, sep = ": ", add_num = TRUE) {
+    items <- cli::cli_vec(items, list("vec-trunc" = 3L))
+    message <- "{.field {label}}{sep}{.val {items}}"
+    if (add_num) {
+        message <- paste(message, "({length(items)} item{?s})", sep = " ")
+    }
+    cli::cli_li(message)
 }
 
 wrap_cat <- function(label, items, sep = ": ", collapse = ", ", indent = 0L, exdent = 2L) {

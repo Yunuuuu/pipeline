@@ -20,7 +20,7 @@ print.manual_cell_marker_dataset <- function(x, ...) {
 new_marker_set <- function(name, main, ..., reference) {
     marker_set <- c(list(main = main), list(...))
     # every elements in ... should be named
-    check_names(marker_set)
+    check_marker_set(marker_set)
     if (name %in% rlang::env_names(manual_cell_marker_dataset)) {
         cli::cli_abort("Existing cell markers found in datasets")
     }
@@ -31,7 +31,7 @@ new_marker_set <- function(name, main, ..., reference) {
     )
 }
 
-check_names <- function(x) {
+check_marker_set <- function(x) {
     x_type <- typeof(x)
     if (identical(x_type, "character")) {
         # No need names for character
@@ -39,7 +39,8 @@ check_names <- function(x) {
     } else if (identical(x_type, "list")) {
         # for a list, we should check all elements have names,
         # and then recall this function to check every elments
-        is_right <- has_names(x) && all(vapply(x, check_names, logical(1L)))
+        is_right <- list_has_element_names(x) && 
+            all(vapply(x, check_marker_set, logical(1L)))
     } else if (!is.null(x)) {
         cli::cli_abort("all elements should be {.field NULL}, or a {.cls list} or a {.cls chracter}")
     }
@@ -49,7 +50,7 @@ check_names <- function(x) {
     is_right
 }
 
-has_names <- function(x) {
+list_has_element_names <- function(x) {
     x_names <- names(x)
     if (is.null(x_names) || any(x_names == "")) FALSE else TRUE
 }

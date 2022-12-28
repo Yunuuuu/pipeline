@@ -1,64 +1,23 @@
+#' Get marker set from `manual_datasets()`
+#' 
+#' The package collected some marker sets from research articles in
+#' `manual_datasets()`, this function just provide a method to extract the
+#' specific marker set.
+#' 
+#' @param name The name of the marker set to extract. `name` usually is the
+#' surname of the first author followed by the years of the published article
+#' connected with "_".
+#' @return A `marker_set` object.
+#' @export 
+#' @name get_markers
 get_markers <- function(name) {
-    manual_cell_marker_dataset[[name]]
+    manual_cell_marker_datasets[[name]]
 }
 
-manual_cell_marker_dataset <- structure(
-    rlang::new_environment(),
-    class = "manual_cell_marker_dataset"
-)
-
-#' @param x an `manual_cell_marker_dataset` object
+#' @param x An `marker_set` object
 #' @param ... Not used currently
 #' @export
-#' @name manual_cell_marker_dataset
-print.manual_cell_marker_dataset <- function(x, ...) {
-    cli::cli_text("A total of {rlang::env_length(x)} cell markers set{?s}")
-}
-
-# convention: name should be the surname of the first author followed by the
-# years of the published article connected with "_"
-new_marker_set <- function(name, main, ..., reference) {
-    marker_set <- c(list(main = main), list(...))
-    # every elements in ... should be named
-    check_marker_set(marker_set)
-    if (name %in% rlang::env_names(manual_cell_marker_dataset)) {
-        cli::cli_abort("Existing cell markers found in datasets")
-    }
-    manual_cell_marker_dataset[[name]] <- structure(
-        marker_set,
-        class = "marker_set",
-        reference = reference
-    )
-}
-
-check_marker_set <- function(x) {
-    x_type <- typeof(x)
-    if (identical(x_type, "character")) {
-        # No need names for character
-        is_right <- TRUE
-    } else if (identical(x_type, "list")) {
-        # for a list, we should check all elements have names,
-        # and then recall this function to check every elments
-        is_right <- list_has_element_names(x) && 
-            all(vapply(x, check_marker_set, logical(1L)))
-    } else if (!is.null(x)) {
-        cli::cli_abort("all elements should be {.field NULL}, or a {.cls list} or a {.cls chracter}")
-    }
-    if (!is_right) {
-        cli::cli_abort("all elements or sub-elements should be named")
-    }
-    is_right
-}
-
-list_has_element_names <- function(x) {
-    x_names <- names(x)
-    if (is.null(x_names) || any(x_names == "")) FALSE else TRUE
-}
-
-#' @param x an `marker_set` object
-#' @param ... Not used currently
-#' @name marker_set
-#' @export
+#' @rdname get_markers
 print.marker_set <- function(x, ...) {
     cli::cli_text("Cell marker set derived from: {.url {attr(x, \"reference\")}}")
     cli::cli_rule("marker set details")
@@ -89,7 +48,7 @@ print.marker_set <- function(x, ...) {
         )
         cli::cli_end()
     }
-    x
+    invisible(x)
 }
 
 cli_list <- function(label, items, sep = ": ", add_num = TRUE) {
@@ -99,6 +58,71 @@ cli_list <- function(label, items, sep = ": ", add_num = TRUE) {
         message <- paste(message, "({length(items)} item{?s})", sep = " ")
     }
     cli::cli_li(message)
+}
+
+#' cell markers datasets collected from research articles
+#' 
+#' We manullay collected some marker sets from research articles,
+#' `manual_datasets` function just returns the database with a class of
+#' `manual_cell_marker_datasets` which has a specific `print` method.
+#' @return An `manual_cell_marker_datasets` object.
+#' @export
+#' @name manual_datasets
+manual_datasets <- function() {
+    manual_cell_marker_datasets
+}
+
+#' @param x An `manual_cell_marker_datasets` object.
+#' @param ... Not used currently
+#' @export
+#' @rdname manual_datasets
+print.manual_cell_marker_datasets <- function(x, ...) {
+    cli::cli_text("A total of {rlang::env_length(x)} cell markers set{?s}")
+}
+
+manual_cell_marker_datasets <- structure(
+    rlang::new_environment(),
+    class = "manual_cell_marker_datasets"
+)
+
+# convention: name should be the surname of the first author followed by the
+# years of the published article connected with "_"
+new_marker_set <- function(name, ..., reference) {
+    marker_set <- list(...)
+    # every elements in ... should be named
+    check_marker_set(marker_set)
+    if (name %in% rlang::env_names(manual_cell_marker_datasets)) {
+        cli::cli_abort("Existing cell markers found in datasets")
+    }
+    manual_cell_marker_datasets[[name]] <- structure(
+        marker_set,
+        class = "marker_set",
+        reference = reference
+    )
+}
+
+check_marker_set <- function(x) {
+    x_type <- typeof(x)
+    if (identical(x_type, "character")) {
+        # No need names for character
+        is_right <- TRUE
+    } else if (identical(x_type, "list")) {
+        # for a list, we should check all elements have names,
+        # and then recall this function to check every elments
+        is_right <- list_has_element_names(x) && 
+            all(vapply(x, check_marker_set, logical(1L)))
+    } else if (!is.null(x)) {
+        cli::cli_abort("all elements should be {.field NULL}, or a {.cls list} or a {.cls chracter}")
+    }
+    if (!is_right) {
+        cli::cli_abort("all elements or sub-elements should be named")
+    }
+    is_right
+}
+
+list_has_element_names <- function(x) {
+    x_names <- names(x)
+    if (is.null(x_names) || any(x_names == "")) FALSE else TRUE
 }
 
 wrap_cat <- function(label, items, sep = ": ", collapse = ", ", indent = 0L, exdent = 2L) {

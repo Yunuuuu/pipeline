@@ -1,6 +1,6 @@
 #' Seach CellMarker database
 #'
-#' Search http://xteam.xbio.top/CellMarker
+#' Search http://xteam.xbio.top/CellMarker.
 #' @param markers an atomic character, the markers to search in the CellMarker
 #' database, can be the Gene Symbol, Gene ID, Protein Symbol or Protein ID
 #' (usually starts with "P", "Q" or "O").
@@ -13,7 +13,7 @@
 #' 2022-12-04.
 #' @return a data.frame of the searching results. A column named `targeted`
 #' containing the matched markers from CellMarker data, the row will be sorted
-#' descendingly by the number of matched markers
+#' descendingly by the number of matched markers.
 #' @export
 cellmarker_search <- function(markers, species = "human", internal = NULL) {
     # nolint start

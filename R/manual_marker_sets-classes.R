@@ -1,67 +1,21 @@
 #' Get marker set from `manual_datasets()`
-#' 
+#'
 #' The package collected some marker sets from research articles in
 #' `manual_datasets()`, this function just provide a method to extract the
-#' specific marker set.
-#' 
+#' specific marker set from the datasets
+#'
 #' @param name The name of the marker set to extract. `name` usually is the
 #' surname of the first author followed by the years of the published article
 #' connected with "_".
 #' @return A `marker_set` object.
-#' @export 
+#' @export
 #' @name get_markers
 get_markers <- function(name) {
     manual_cell_marker_datasets[[name]]
 }
 
-#' @param x An `marker_set` object
-#' @param ... Not used currently
-#' @export
-#' @rdname get_markers
-print.marker_set <- function(x, ...) {
-    cli::cli_text("Cell marker set derived from: {.url {attr(x, \"reference\")}}")
-    cli::cli_rule("marker set details")
-    main_par_id <- cli::cli_par()
-    cli::cli_text("Main cell types")
-    main_item_lid <- cli::cli_ul()
-    .mapply(
-        cli_list,
-        list(
-            label = names(x$main),
-            items = x$main
-        ),
-        MoreArgs = list(add_num = FALSE)
-    )
-    cli::cli_end(id = main_item_lid)
-    cli::cli_end(id = main_par_id)
-    subelemnts <- x[setdiff(names(x), "main")]
-    if (length(subelemnts)) {
-        cli::cli_ul()
-        cli::cli_text("Including markers for {length(subelemnts)} sub-group{?s}")
-        .mapply(
-            cli_list,
-            list(
-                label = names(subelemnts),
-                items = lapply(subelemnts, names)
-            ),
-            MoreArgs = NULL
-        )
-        cli::cli_end()
-    }
-    invisible(x)
-}
-
-cli_list <- function(label, items, sep = ": ", add_num = TRUE) {
-    items <- cli::cli_vec(items, list("vec-trunc" = 3L))
-    message <- "{.field {label}}{sep}{.val {items}}"
-    if (add_num) {
-        message <- paste(message, "({length(items)} item{?s})", sep = " ")
-    }
-    cli::cli_li(message)
-}
-
 #' cell markers datasets collected from research articles
-#' 
+#'
 #' We manullay collected some marker sets from research articles,
 #' `manual_datasets` function just returns the database with a class of
 #' `manual_cell_marker_datasets` which has a specific `print` method.
@@ -92,13 +46,63 @@ new_marker_set <- function(name, ..., reference) {
     # every elements in ... should be named
     check_marker_set(marker_set)
     if (name %in% rlang::env_names(manual_cell_marker_datasets)) {
-        cli::cli_abort("Existing cell markers found in datasets")
+        cli::cli_abort("Existing cell marker set found in datasets")
     }
     manual_cell_marker_datasets[[name]] <- structure(
         marker_set,
         class = "marker_set",
         reference = reference
     )
+}
+
+#' @param x An `marker_set` object
+#' @param ... Not used currently
+#' @export
+#' @rdname get_markers
+print.marker_set <- function(x, ...) {
+    cli::cli_text("Cell marker set derived from: {.url {attr(x, \"reference\")}}")
+    cli::cli_rule("marker set details")
+    # cat main markers if it exits
+    if ("main" %in% names(x)) {
+        main_par_id <- cli::cli_par()
+        cli::cli_text("Main cell types")
+        main_item_lid <- cli::cli_ul()
+        .mapply(
+            cli_list,
+            list(
+                label = names(x$main),
+                items = x$main
+            ),
+            MoreArgs = list(add_num = FALSE)
+        )
+        cli::cli_end(id = main_item_lid)
+        cli::cli_end(id = main_par_id)
+    }
+    # cat other markers
+    other_items <- x[setdiff(names(x), "main")]
+    if (length(other_items)) {
+        cli::cli_ul()
+        cli::cli_text("Including markers for {length(other_items)} group{?s}")
+        .mapply(
+            cli_list,
+            list(
+                label = names(other_items),
+                items = lapply(other_items, names)
+            ),
+            MoreArgs = NULL
+        )
+        cli::cli_end()
+    }
+    invisible(x)
+}
+
+cli_list <- function(label, items, sep = ": ", add_num = TRUE) {
+    items <- cli::cli_vec(items, list("vec-trunc" = 3L))
+    message <- "{.field {label}}{sep}{.val {items}}"
+    if (add_num) {
+        message <- paste(message, "({length(items)} item{?s})", sep = " ")
+    }
+    cli::cli_li(message)
 }
 
 check_marker_set <- function(x) {
@@ -109,7 +113,7 @@ check_marker_set <- function(x) {
     } else if (identical(x_type, "list")) {
         # for a list, we should check all elements have names,
         # and then recall this function to check every elments
-        is_right <- list_has_element_names(x) && 
+        is_right <- list_has_element_names(x) &&
             all(vapply(x, check_marker_set, logical(1L)))
     } else if (!is.null(x)) {
         cli::cli_abort("all elements should be {.field NULL}, or a {.cls list} or a {.cls chracter}")

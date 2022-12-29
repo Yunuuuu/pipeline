@@ -13,6 +13,8 @@ RoxygenNote: 7.2.1
 Imports: 
     cli,
     data.table,
-    rlang
+    rlang (>= 0.4.11)
 Depends: 
     R (>= 2.10)
+Suggests: 
+    roxygen2

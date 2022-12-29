@@ -80,7 +80,7 @@ cellmarker_prepare <- function(data) {
 }
 
 cellmarker_download <- function(species) {
-    if (rlang::env_has(cellmarker_database_external, nms = species)) {
+    if (!rlang::env_has(cellmarker_database_external, nms = species)) {
         data_link <- switch(species,
             human = "http://xteam.xbio.top/CellMarker/download/Human_cell_markers.txt",
             mouse = "http://xteam.xbio.top/CellMarker/download/Mouse_cell_markers.txt"

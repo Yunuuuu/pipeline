@@ -124,11 +124,6 @@ check_marker_set <- function(x) {
     is_right
 }
 
-list_has_element_names <- function(x) {
-    x_names <- names(x)
-    if (is.null(x_names) || any(x_names == "")) FALSE else TRUE
-}
-
 wrap_cat <- function(label, items, sep = ": ", collapse = ", ", indent = 0L, exdent = 2L) {
     total <- length(items)
 

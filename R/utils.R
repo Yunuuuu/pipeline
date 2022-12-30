@@ -14,14 +14,14 @@ has_names <- function(x) {
     !is.na(nms) & nms != ""
 }
 
-#' implement similar purrr::imap function 
+#' implement similar purrr::imap function
 #' @note this function won't keep the names of .x in the final result
 #' @keywords internal
-#' @noRd 
+#' @noRd
 imap <- function(.x, .f, ...) {
     .mapply(
         rlang::as_function(.f),
-        dots = list(.x, names(.x)), 
+        dots = list(.x, names(.x) %||% as.character(seq_along(.x))),
         MoreArgs = list(...)
     )
 }
@@ -44,7 +44,7 @@ rename <- function(x, replace) {
     current_names <- names(x)
     old_names <- names(replace)
     missing_names <- setdiff(old_names, current_names)
-    if (length(missing_names) > 0) {
+    if (length(missing_names) > 0L) {
         replace <- replace[!old_names %in% missing_names]
         old_names <- names(replace)
     }

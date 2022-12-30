@@ -2,6 +2,7 @@
 % Please edit documentation in R/class-step.R
 \name{step}
 \alias{step}
+\alias{new_step}
 \alias{[[.step}
 \alias{[[<-.step}
 \alias{$.step}
@@ -11,7 +12,9 @@
 \title{Build a \code{step} object
 A \code{step} object define the command to run in the pipeline.}
 \usage{
-step(call, deps = NULL, finished = FALSE, return = NULL)
+step(call, deps = NULL, finished = FALSE, return = NULL, seed = NULL)
+
+new_step(call, deps = NULL, finished = FALSE, return = NULL, seed = NULL)
 
 \method{[[}{step}(x, name)
 
@@ -28,9 +31,9 @@ step(call, deps = NULL, finished = FALSE, return = NULL)
 \arguments{
 \item{call}{The command to run. Notes: this will be enclosed by
 <\code{\link[rlang:enquo]{rlang::enquo()}}> to bundle the environment of users. If you use the step
-in another environment other than the current environment. You should quote
-the expression firstly then use <\code{\link[rlang:injection-operator]{!!}}> to inject
-the call expression.}
+in another environment other than the current environment. You should use
+\link{new_step} or quote the expression firstly then use
+<\code{\link[rlang:injection-operator]{!!}}> to inject the call expression in \link{step}.}
 
 \item{deps}{A character vector defines the upstream steps to run before
 runing this step.}
@@ -44,6 +47,12 @@ evaluated from \code{call} won't be saved. Otherwise, the results will be saved.
 if \code{TRUE} or \code{NULL}, the result name will be the same with the name in
 \code{step_tree} object. Or a sclar \code{character} define the name.}
 
+\item{seed}{A scalar \code{logical}, \code{numeric}, or \code{NULL}. a \code{logical} value
+indicates whether to set seed when evaluated the command in "call". if
+\code{TRUE}, the call is evaluated with a seed (based on the hash of the call
+object). if \code{numeric}, seed will be set by \code{set.seed(as.integer(seed))}.
+Otherwise, the call is evaluated without seed.}
+
 \item{x}{A \code{step} object from which to extract element(s) or in which to
 replace element(s).}
 
@@ -53,6 +62,9 @@ replace element(s).}
 A \code{step} object.
 }
 \description{
-Build a \code{step} object
-A \code{step} object define the command to run in the pipeline.
+steps define the command the run in the analysis pipeline
+\itemize{
+\item step: user-friendly helper
+\item new_step: low-level constructor
+}
 }

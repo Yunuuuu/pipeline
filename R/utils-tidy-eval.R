@@ -101,6 +101,6 @@
 #' @md
 #' @name tidyeval
 #' @keywords internal
-#' @importFrom rlang .data :=
+#' @importFrom rlang .data := 
 #' @aliases enquo enquos .data := as_name as_label
 NULL

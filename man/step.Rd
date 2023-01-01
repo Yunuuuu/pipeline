@@ -48,7 +48,7 @@ if \code{TRUE} or \code{NULL}, the result name will be the same with the name in
 \code{step_tree} object. Or a sclar \code{character} define the name.}
 
 \item{seed}{A scalar \code{logical}, \code{numeric}, or \code{NULL}. a \code{logical} value
-indicates whether to set seed when evaluated the command in "call". if
+indicates whether to set seed when evaluated the expression in "call". if
 \code{TRUE}, the call is evaluated with a seed (based on the hash of the call
 object). if \code{numeric}, seed will be set by \code{set.seed(as.integer(seed))}.
 Otherwise, the call is evaluated without seed.}

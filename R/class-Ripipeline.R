@@ -12,14 +12,17 @@ Ripipeline <- R6::R6Class("Ripipeline",
             private$step_graph <- NULL
             invisible(self)
         },
-        set_step = function(id, ...) {
-            assert_scalar_chr(id)
+        set_step = function(id, ..., reset = TRUE) {
+            private$check_id(id, exist = FALSE)
             private$step_tree[[id]] <- step(...)
+            if (isTRUE(reset)) {
+                self$reset_step(id = id, downstream = TRUE)
+            }
             private$step_graph <- NULL
             invisible(self)
         },
-        add_step = function(id, ...) {
-            assert_scalar_chr(id)
+        add_step = function(id, ..., reset = TRUE) {
+            private$check_id(id, exist = FALSE)
             if (id %in% names(private$step_tree)) {
                 cli::cli_abort(c(
                     "Already existed {.field step}",
@@ -27,18 +30,24 @@ Ripipeline <- R6::R6Class("Ripipeline",
                 ))
             }
             private$step_tree[[id]] <- step(...)
-            private$step_graph <- NULL
-            invisible(self)
-        },
-        set_steps = function(...) {
-            step_tree <- step_tree(...)
-            for (id in names(step_tree)) {
-                private$step_tree[[id]] <- step_tree[[id]]
+            if (isTRUE(reset)) {
+                self$reset_step(id = id, downstream = TRUE)
             }
             private$step_graph <- NULL
             invisible(self)
         },
-        add_steps = function(...) {
+        set_steps = function(..., reset = TRUE) {
+            step_tree <- step_tree(...)
+            for (id in names(step_tree)) {
+                private$step_tree[[id]] <- step_tree[[id]]
+                if (isTRUE(reset)) {
+                    self$reset_step(id = id, downstream = TRUE)
+                }
+            }
+            private$step_graph <- NULL
+            invisible(self)
+        },
+        add_steps = function(..., reset = TRUE) {
             step_tree <- step_tree(...)
             dup_names <- intersect(names(step_tree), names(private$step_tree))
             if (length(dup_names)) {
@@ -49,37 +58,58 @@ Ripipeline <- R6::R6Class("Ripipeline",
             }
             for (id in names(step_tree)) {
                 private$step_tree[[id]] <- step_tree[[id]]
+                if (isTRUE(reset)) {
+                    self$reset_step(id = id, downstream = TRUE)
+                }
             }
             private$step_graph <- NULL
             invisible(self)
         },
-        modify_step = function(id, call = NULL, ...) {
-            assert_scalar_chr(id)
-            if (!id %in% names(step_tree)) {
-                cli::cli_abort("{.arg id} must exist in the {.var step_tree}")
-            }
+        modify_call = function(id, call = NULL, ..., reset = TRUE) {
+            private$check_id(id, exist = TRUE)
             step <- private$step_tree[[id]]
-            if (is.list(call)) {
-                step$call <- call_standardise(step$call)
-                step$call <- rlang::call_modify(step$call, !!!call)
-                self$reset_step(id = id, downstream = TRUE)
-            } else if (rlang::is_call(call)) {
+            call <- rlang::enquo(call)
+            if (!is.null(rlang::quo_get_expr(call))) {
                 step$call <- call
-                self$reset_step(id = id, downstream = TRUE)
-            } else if (!is.null(call)) {
-                cli::cli_abort(c(
-                    "{.arg call} must be a {.cls list} or an {.arg call}",
-                    "x" = "You've supplied a {.cls {class(call)}}."
-                ))
+                if (isTRUE(reset)) {
+                    self$reset_step(id = id, downstream = TRUE)
+                }
+            } else {
+                step$call <- call_standardise(step$call)
+                dots_list <- rlang::list2(...)
+                if (length(dots_list)) {
+                    step$call <- rlang::call_modify(step$call, !!!dots_list)
+                    if (isTRUE(reset)) {
+                        self$reset_step(id = id, downstream = TRUE)
+                    }
+                }
             }
-            private$step_tree[[id]] <- modify_list(step,
-                restrict = c("deps", "finished", "return", "seed"),
-                ...
-            )
+            invisible(self)
+        },
+        modify_step = function(id, deps, finished, return, seed, call = NULL, ..., reset = TRUE) {
+            private$check_id(id, exist = TRUE)
+            step <- private$step_tree[[id]]
+            if (!missing(deps)) {
+                step["deps"] <- list(deps)
+            }
+            if (!missing(finished)) {
+                step["finished"] <- list(finished)
+            }
+            if (!missing(return)) {
+                step["return"] <- list(return)
+            }
+            if (!missing(seed)) {
+                step["seed"] <- list(seed)
+            }
+            self$modify_call(id = id, call = call, ..., reset = FALSE)
+            if (isTRUE(reset)) {
+                self$reset_step(id = id, downstream = TRUE)
+            }
             private$step_graph <- NULL
             invisible(self)
         },
         reset_step = function(id, downstream = TRUE) {
+            private$check_id(id, exist = TRUE)
             if (isTRUE(downstream)) {
                 downstream_steps <- self$build_step_graph(
                     from = id, add_attrs = FALSE
@@ -94,6 +124,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
             invisible(self)
         },
         finish_step = function(id) {
+            private$check_id(id, exist = TRUE)
             private$step_tree[[id]]$finished <- TRUE
             invisible(self)
         },
@@ -126,7 +157,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
         },
         env_names = function() {
             rlang::env_names(private$envir)
-        },        
+        },
 
         #' following define dependencies methods
         #' Report if dependencies exist in step_tree
@@ -168,16 +199,23 @@ Ripipeline <- R6::R6Class("Ripipeline",
             if (is.null(to) && is.null(from)) {
                 return(step_graph)
             } else if (!is.null(to)) {
-                return(igraph::subcomponent(step_graph, v = to, mode = "in"))
+                graph_ids <- igraph::subcomponent(
+                    step_graph,
+                    v = to, mode = "in"
+                )
             } else if (!is.null(from)) {
-                return(igraph::subcomponent(step_graph, v = from, mode = "out"))
+                graph_ids <- igraph::subcomponent(
+                    step_graph,
+                    v = from, mode = "out"
+                )
             }
+            return(igraph::subgraph(step_graph, vids = graph_ids))
         },
         plot_step_tree = function(target = NULL, layout = igraph::layout_as_tree, ...) {
             if (is.null(target)) {
                 step_graph <- self$build_step_graph(add_attrs = TRUE)
             } else {
-                step_graph <- self$build_step_graph(from = id, add_attrs = TRUE)
+                step_graph <- self$build_step_graph(to = target, add_attrs = TRUE)
             }
             plot(step_graph, layout = layout, ...)
         },
@@ -254,7 +292,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
                     v = target, mode = "in"
                 )
                 target_deps <- names(target_deps)
-                
+
                 # Output targets information
                 cli_par_id <- cli::cli_par()
                 cli::cli_rule(center = "Runing target: {.field {target}}")
@@ -295,5 +333,13 @@ Ripipeline <- R6::R6Class("Ripipeline",
     # all object used to run step command should live in `data`
     # By passing data into `data` argument of `eval_tidy`, we can implement data
     # mask
-    private = list(step_tree = NULL, envir = NULL, step_graph = NULL)
+    private = list(
+        step_tree = NULL, envir = NULL, step_graph = NULL,
+        check_id = function(id, exist = TRUE) {
+            assert_scalar_chr(id)
+            if (exist && !id %in% names(private$step_tree)) {
+                cli::cli_abort("{.arg id} must exist in the {.var step_tree}")
+            }
+        }
+    )
 )

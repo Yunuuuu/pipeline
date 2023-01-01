@@ -1,3 +1,6 @@
+# Since this file will run code from other files, it's better to keep this file
+# in the end of "R/".
+
 # https://www.sciencedirect.com/science/article/pii/S153561082100115X
 # https://ars.els-cdn.com/content/image/1-s2.0-S153561082100115X-mmc1.pdf
 new_marker_set(

@@ -1,42 +1,45 @@
-#' Get marker set from `manual_datasets()`
+#' Cell markers datasets collected from research articles
 #'
-#' The package collected some marker sets from research articles in
-#' `manual_datasets()`, this function just provide a method to extract the
-#' specific marker set from the datasets
-#'
+#' @description 
+#' We manullay collected some cell marker sets from research articles, these
+#' funciton juse provide some methods to operate with the manual cell marker
+#' sets (manual_cms).
+#' 
+#' `manual_cms` function just returns the database with a class of
+#' `manual_cell_marker_datasets` which has a specific `print` method.
+#' 
+#' `get_markers` function extract the specific marker set from the datasets,
+#' which return a `marker_set` class object.
 #' @param name The name of the marker set to extract. `name` usually is the
 #' surname of the first author followed by the years of the published article
 #' connected with "_".
-#' @return A `marker_set` object.
+#' @param x An `manual_cms` or `marker_set` object.
+#' @param ... Not used currently
+#' @name manual_cms
+NULL
+
 #' @export
-#' @name get_markers
+#' @rdname manual_cms
 get_markers <- function(name) {
     manual_cell_marker_datasets[[name]]
 }
 
-#' cell markers datasets collected from research articles
-#'
-#' We manullay collected some marker sets from research articles,
-#' `manual_datasets` function just returns the database with a class of
-#' `manual_cell_marker_datasets` which has a specific `print` method.
-#' @return An `manual_cell_marker_datasets` object.
+
 #' @export
-#' @name manual_datasets
-manual_datasets <- function() {
+#' @rdname manual_cms
+manual_cms <- function() {
     manual_cell_marker_datasets
 }
 
-#' @param x An `manual_cell_marker_datasets` object.
-#' @param ... Not used currently
 #' @export
-#' @rdname manual_datasets
-print.manual_cell_marker_datasets <- function(x, ...) {
+#' @rdname manual_cms
+print.manual_cms <- function(x, ...) {
     cli::cli_text("A total of {rlang::env_length(x)} cell markers set{?s}")
 }
 
 manual_cell_marker_datasets <- structure(
     rlang::new_environment(),
-    class = "manual_cell_marker_datasets"
+    class = "manual_cms"
 )
 
 # convention: name should be the surname of the first author followed by the
@@ -59,10 +62,8 @@ new_marker_set <- function(name, ..., reference) { # nolint styler: off
     )
 }
 
-#' @param x An `marker_set` object
-#' @param ... Not used currently
 #' @export
-#' @rdname get_markers
+#' @rdname manual_cms
 print.marker_set <- function(x, ...) {
     cli::cli_text("Cell marker set derived from: {.url {attr(x, \"reference\")}}")
     cli::cli_rule("marker set details")

@@ -13,7 +13,6 @@ Ripipeline <- R6::R6Class("Ripipeline",
         },
         set_step_tree = function(...) {
             private$step_tree <- step_tree(...)
-            private$step_graph <- NULL
             invisible(self)
         },
         set_step = function(id, ..., reset = TRUE) {
@@ -22,7 +21,6 @@ Ripipeline <- R6::R6Class("Ripipeline",
             if (isTRUE(reset)) {
                 self$reset_step(id = id, downstream = TRUE)
             }
-            private$step_graph <- NULL
             invisible(self)
         },
         add_step = function(id, ..., reset = TRUE) {
@@ -37,7 +35,6 @@ Ripipeline <- R6::R6Class("Ripipeline",
             if (isTRUE(reset)) {
                 self$reset_step(id = id, downstream = TRUE)
             }
-            private$step_graph <- NULL
             invisible(self)
         },
         set_steps = function(..., reset = TRUE) {
@@ -48,7 +45,6 @@ Ripipeline <- R6::R6Class("Ripipeline",
                     self$reset_step(id = id, downstream = TRUE)
                 }
             }
-            private$step_graph <- NULL
             invisible(self)
         },
         add_steps = function(..., reset = TRUE) {
@@ -66,7 +62,6 @@ Ripipeline <- R6::R6Class("Ripipeline",
                     self$reset_step(id = id, downstream = TRUE)
                 }
             }
-            private$step_graph <- NULL
             invisible(self)
         },
         # modify call only change the call element of the step
@@ -123,7 +118,6 @@ Ripipeline <- R6::R6Class("Ripipeline",
             if (isTRUE(reset)) {
                 self$reset_step(id = id, downstream = TRUE)
             }
-            private$step_graph <- NULL
             invisible(self)
         },
         reset_step = function(id, downstream = TRUE) {
@@ -258,14 +252,10 @@ Ripipeline <- R6::R6Class("Ripipeline",
             if (is.null(step_list)) {
                 return(NULL)
             }
-            step_graph <- private$step_graph
-            if (is.null(step_graph)) {
-                step_graph <- build_step_graph_helper(
-                    step_list,
-                    add_attrs = add_attrs
-                )
-                private$step_graph <- step_graph
-            }
+            step_graph <- build_step_graph_helper(
+                step_list,
+                add_attrs = add_attrs
+            )
 
             if (!is.null(from) && !is.null(to)) {
                 cli::cli_warn(c(
@@ -275,18 +265,20 @@ Ripipeline <- R6::R6Class("Ripipeline",
             }
             if (is.null(to) && is.null(from)) {
                 return(step_graph)
-            } else if (!is.null(to)) {
-                graph_ids <- igraph::subcomponent(
-                    step_graph,
-                    v = to, mode = "in"
-                )
-            } else if (!is.null(from)) {
-                graph_ids <- igraph::subcomponent(
-                    step_graph,
-                    v = from, mode = "out"
-                )
+            } else {
+                if (!is.null(to)) {
+                    graph_ids <- igraph::subcomponent(
+                        step_graph,
+                        v = to, mode = "in"
+                    )
+                } else if (!is.null(from)) {
+                    graph_ids <- igraph::subcomponent(
+                        step_graph,
+                        v = from, mode = "out"
+                    )
+                }
+                return(igraph::subgraph(step_graph, vids = graph_ids))
             }
-            return(igraph::subgraph(step_graph, vids = graph_ids))
         },
         plot_step_graph = function(to = NULL, from = NULL, layout = igraph::layout_as_tree, ...) {
             step_graph <- self$build_step_graph(
@@ -423,7 +415,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
     # By passing data into `data` argument of `eval_tidy`, we can implement data
     # mask
     private = list(
-        step_tree = NULL, envir = NULL, step_graph = NULL,
+        step_tree = NULL, envir = NULL,
         check_id = function(id, exist = TRUE) {
             assert_scalar_chr(id)
             if (exist && !id %in% names(private$step_tree)) {

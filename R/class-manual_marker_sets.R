@@ -41,11 +41,10 @@ manual_cell_marker_datasets <- structure(
 
 # convention: name should be the surname of the first author followed by the
 # years of the published article connected with "_"
-new_marker_set <- function(name, ..., reference) {
+new_marker_set <- function(name, ..., reference) { # nolint styler: off
     marker_set <- rlang::list2(...)
     # every elements in ... should be named
-    # validate_marker_set(marker_set) ? cannot use devtools::load_all() when
-    # enable this line.
+    validate_marker_set(marker_set) 
     
     if (rlang::env_has(manual_cell_marker_datasets, nms = name)) {
         cli::cli_abort("Existed cell marker set found in datasets")
@@ -118,10 +117,10 @@ validate_marker_set <- function(x) {
     } else if (identical(x_type, "list")) {
         # for a list, we should check all elements have names,
         # and then recall this function to check every elments
-        is_right <- list_has_element_names(x) &&
+        is_right <- all(has_names(x)) &&
             all(vapply(x, validate_marker_set, logical(1L)))
     } else if (!is.null(x)) {
-        cli::cli_abort("all elements should be {.val NULL}, or a {.cls list} or a {.cls chracter}")
+        cli::cli_abort("all elements must be {.val NULL}, or a {.cls list} or a {.cls chracter}")
     }
     if (!is_right) {
         cli::cli_abort("all elements or sub-elements should be named")

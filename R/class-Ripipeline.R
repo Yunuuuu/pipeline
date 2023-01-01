@@ -251,6 +251,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
             }
             invisible(self)
         },
+
         #' build step dependencies network as an graph object
         build_step_graph = function(to = NULL, from = NULL, add_attrs = FALSE) {
             step_list <- unclass(private$step_tree)
@@ -287,7 +288,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
             }
             return(igraph::subgraph(step_graph, vids = graph_ids))
         },
-        plot_step_tree = function(to = NULL, from = NULL, layout = igraph::layout_as_tree, ...) {
+        plot_step_graph = function(to = NULL, from = NULL, layout = igraph::layout_as_tree, ...) {
             step_graph <- self$build_step_graph(
                 to = to, from = from, add_attrs = TRUE
             )

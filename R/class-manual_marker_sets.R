@@ -101,15 +101,6 @@ print.marker_set <- function(x, ...) {
     invisible(x)
 }
 
-cli_list <- function(label, items, sep = ": ", add_num = TRUE) {
-    items <- cli::cli_vec(items, list("vec-trunc" = 3L))
-    message <- "{.field {label}}{sep}{.val {items}}"
-    if (add_num) {
-        message <- paste(message, "({length(items)} item{?s})", sep = " ")
-    }
-    cli::cli_li(message)
-}
-
 validate_marker_set <- function(x) {
     x_type <- typeof(x)
     if (identical(x_type, "character")) {

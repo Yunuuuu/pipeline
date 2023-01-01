@@ -10,6 +10,7 @@ has_names <- function(x) {
     !is.na(nms) & nms != ""
 }
 
+#' @importFrom rlang zap
 #' @export
 rlang::zap
 
@@ -105,4 +106,13 @@ call_standardise <- function (call, env = rlang::caller_env()) {
         matched <- rlang::call_match(expr, fn, defaults = TRUE)
         rlang::set_expr(call, matched)
     }
+}
+
+cli_list <- function(label, items, sep = ": ", add_num = TRUE) {
+    items <- cli::cli_vec(items, list("vec-trunc" = 3L))
+    message <- "{.field {label}}{sep}{.val {items}}"
+    if (add_num) {
+        message <- paste(message, "({length(items)} item{?s})", sep = " ")
+    }
+    cli::cli_li(message)
 }

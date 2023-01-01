@@ -2,10 +2,6 @@
     if (is.null(x)) y else x
 }
 
-list_has_element_names <- function(x) {
-    if (all(has_names(x))) TRUE else FALSE
-}
-
 has_names <- function(x) {
     nms <- names(x)
     if (is.null(nms)) {

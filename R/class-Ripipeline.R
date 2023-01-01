@@ -69,7 +69,9 @@ Ripipeline <- R6::R6Class("Ripipeline",
             private$step_graph <- NULL
             invisible(self)
         },
-        modify_call = function(id, call = NULL, ..., reset = TRUE) {
+        # modify call only change the call element of the step
+        # No need to update the step_graph
+        modify_call = function(id, ..., call = NULL, reset = TRUE) {
             private$check_id(id, exist = TRUE)
             step <- private$step_tree[[id]]
             call <- rlang::enquo(call)
@@ -80,7 +82,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
                 }
             } else {
                 step$call <- call_standardise(step$call)
-                dots_list <- rlang::list2(...)
+                dots_list <- rlang::enquos(...)
                 if (length(dots_list)) {
                     step$call <- rlang::call_modify(step$call, !!!dots_list)
                     if (isTRUE(reset)) {
@@ -93,9 +95,9 @@ Ripipeline <- R6::R6Class("Ripipeline",
         modify_step = function(id, deps, finished, return, seed, call = NULL, ..., reset = TRUE) {
             private$check_id(id, exist = TRUE)
             self$modify_call(
-                id = id,
+                id = id, ...,
                 call = !!rlang::enquo(call),
-                ..., reset = FALSE
+                reset = FALSE
             )
             step <- private$step_tree[[id]]
             if (!missing(deps)) {
@@ -136,6 +138,60 @@ Ripipeline <- R6::R6Class("Ripipeline",
             private$check_id(id, exist = TRUE)
             private$step_tree[[id]]$finished <- TRUE
             invisible(self)
+        },
+        # this will also modify the underlying call, substitute the result
+        # symbol of the "from" step to the result symbol of "to" step.
+        # if you just want to modify deps but not change the underlying call
+        # object, try to use `$modify_step` method.
+        switch_step_dep = function(id, from, to, force = FALSE) {
+            private$check_id(id, exist = TRUE)
+            step <- private$step_tree[[id]]
+            # check from argument
+            if (!from %in% step$deps) {
+                cli::cli_abort("{.arg from} must exist in the deps of step {.val {id}}")
+            }
+            from_return_symbol <- self$get_return_name(id = from)
+            if (is.null(from_return_symbol)) {
+                cli::cli_abort("{.arg from} has no returned result symbol")
+            }
+
+            # check to argument
+            private$check_id(to, exist = FALSE)
+            if (!to %in% names(private$step_tree)) {
+                if (isTRUE(force)) {
+                    to_return_symbol <- to
+                } else {
+                    cli::cli_abort(c(
+                        "{.arg to} must exist in the {.var step_tree]",
+                        i = "You can force to proceed by enable {.arg force} where {.arg to} will be regarded as the step returned result symbol" # nolint
+                    ))
+                }
+            } else {
+                to_return_symbol <- self$get_return_name(id = to)
+                if (is.null(to_return_symbol)) {
+                    cli::cli_abort("{.arg to} has no returned result symbol")
+                }
+            }
+            # run switch 
+            step$deps <- union(setdiff(step$deps, from), to)
+            step$call <- change_expr(
+                step$call,
+                from = rlang::sym(from_return_symbol),
+                to = rlang::sym(to_return_symbol)
+            )
+            private$step_tree[[id]] <- step
+            invisible(self)
+        },
+        get_return_name = function(id) {
+            private$check_id(id, exist = TRUE)
+            step <- private$step_tree[[id]]
+            if (is.null(step$return) || isTRUE(step$return)) {
+                id
+            } else if (rlang::is_scalar_character(step$return)) {
+                step$return
+            } else {
+                NULL
+            }
         },
 
         #' methods for the operation in the attached environment
@@ -220,12 +276,10 @@ Ripipeline <- R6::R6Class("Ripipeline",
             }
             return(igraph::subgraph(step_graph, vids = graph_ids))
         },
-        plot_step_tree = function(target = NULL, layout = igraph::layout_as_tree, ...) {
-            if (is.null(target)) {
-                step_graph <- self$build_step_graph(add_attrs = TRUE)
-            } else {
-                step_graph <- self$build_step_graph(to = target, add_attrs = TRUE)
-            }
+        plot_step_tree = function(to = NULL, from = NULL, layout = igraph::layout_as_tree, ...) {
+            step_graph <- self$build_step_graph(
+                to = to, from = from, add_attrs = TRUE
+            )
             plot(step_graph, layout = layout, ...)
         },
 
@@ -237,7 +291,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
         #'   in step.
         #' @keywords internal
         #' @noRd
-        run_step = function(id, refresh = FALSE, reset = FALSE, envir = rlang::caller_env()) {
+        run_step = function(id, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
             step <- private$step_tree[[id]]
             if (is.null(step$return) || isTRUE(step$return)) {
                 return <- id
@@ -245,9 +299,21 @@ Ripipeline <- R6::R6Class("Ripipeline",
                 return <- step$return
             }
             if (isTRUE(step$finished) && isFALSE(refresh)) {
-                return(rlang::env_get(private$envir, nm = return))
+                if (!isFALSE(step$return)) {
+                    return(rlang::env_get(private$envir, nm = return))
+                } else {
+                    return(NULL)
+                }
             }
-            if (rlang::is_scalar_integer(step$seed)) {
+            if (isTRUE(step$seed) || rlang::is_scalar_integer(step$seed) || rlang::is_scalar_double(step$seed)) {
+                if (isTRUE(step$seed)) {
+                    seed <- digest::digest2int(
+                        digest::digest(call, "crc32"),
+                        seed = 0L
+                    )
+                } else {
+                    seed <- as.integer(step$seed)
+                }
                 old_seed <- rlang::env_get(
                     globalenv(), ".Random.seed",
                     default = NULL
@@ -259,19 +325,21 @@ Ripipeline <- R6::R6Class("Ripipeline",
                         rlang::env_bind(globalenv(), .Random.seed = old_seed)
                     )
                 }
-                set.seed(step$seed)
+                set.seed(seed)
             }
             mask <- rlang::new_data_mask(private$envir)
             mask$.data <- rlang::as_data_pronoun(mask)
             result <- rlang::eval_tidy(step$call, data = mask, env = envir)
             if (!isFALSE(step$return)) {
                 self$env_bind(name = return, value = result)
+            } else {
+                result <- NULL
             }
             if (isTRUE(reset)) self$reset_step(id = id, downstream = TRUE)
             self$finish_step(id)
             result
         },
-        run_targets = function(targets = NULL, refresh = FALSE, reset = FALSE, envir = rlang::caller_env()) {
+        run_targets = function(targets = NULL, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
             step_list <- unclass(private$step_tree)
 
             # build dependencies graph

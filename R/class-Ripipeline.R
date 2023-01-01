@@ -257,15 +257,15 @@ Ripipeline <- R6::R6Class("Ripipeline",
                 add_attrs = add_attrs
             )
 
-            if (!is.null(from) && !is.null(to)) {
-                cli::cli_warn(c(
-                    "Both {.arg from} and {.arg to} are setted.",
-                    "!" = "Will only use {.arg to}."
-                ))
-            }
             if (is.null(to) && is.null(from)) {
                 return(step_graph)
             } else {
+                if (!is.null(from) && !is.null(to)) {
+                    cli::cli_warn(c(
+                        "Both {.arg from} and {.arg to} are setted.",
+                        "!" = "Will only use {.arg to}."
+                    ))
+                }
                 if (!is.null(to)) {
                     graph_ids <- igraph::subcomponent(
                         step_graph,

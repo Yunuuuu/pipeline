@@ -7,6 +7,10 @@ Ripipeline <- R6::R6Class("Ripipeline",
         },
 
         #' methods for step_tree operation
+        get_step = function(id) {
+            private$check_id(id, exist = FALSE)
+            private$step_tree[[id]]
+        },
         set_step_tree = function(...) {
             private$step_tree <- step_tree(...)
             private$step_graph <- NULL
@@ -88,6 +92,11 @@ Ripipeline <- R6::R6Class("Ripipeline",
         },
         modify_step = function(id, deps, finished, return, seed, call = NULL, ..., reset = TRUE) {
             private$check_id(id, exist = TRUE)
+            self$modify_call(
+                id = id,
+                call = !!rlang::enquo(call),
+                ..., reset = FALSE
+            )
             step <- private$step_tree[[id]]
             if (!missing(deps)) {
                 step["deps"] <- list(deps)
@@ -101,7 +110,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
             if (!missing(seed)) {
                 step["seed"] <- list(seed)
             }
-            self$modify_call(id = id, call = call, ..., reset = FALSE)
+            private$step_tree[[id]] <- step
             if (isTRUE(reset)) {
                 self$reset_step(id = id, downstream = TRUE)
             }

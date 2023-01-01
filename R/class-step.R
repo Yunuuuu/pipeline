@@ -85,7 +85,7 @@ new_step <- function(call, deps = NULL, finished = FALSE, return = NULL, seed = 
 #' @rdname step
 `[[<-.step` <- function(x, name, value) {
     step <- NextMethod()
-    step(
+    new_step(
         call = step$call, deps = step$deps,
         finished = step$finished, return = step$return
     )
@@ -101,7 +101,7 @@ new_step <- function(call, deps = NULL, finished = FALSE, return = NULL, seed = 
 #' @rdname step
 `$<-.step` <- function(x, name, value) {
     step <- NextMethod()
-    step(
+    new_step(
         call = step$call, deps = step$deps,
         finished = step$finished, return = step$return,
         seed = step$seed
@@ -118,7 +118,7 @@ new_step <- function(call, deps = NULL, finished = FALSE, return = NULL, seed = 
 #' @rdname step
 `[<-.step` <- function(x, name, value) {
     step <- NextMethod()
-    step(
+    new_step(
         call = step$call, deps = step$deps,
         finished = step$finished, return = step$return,
         seed = step$seed

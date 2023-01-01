@@ -44,23 +44,23 @@ step <- function(call, deps = NULL, finished = FALSE, return = NULL, seed = NULL
 #' @rdname step
 new_step <- function(call, deps = NULL, finished = FALSE, return = NULL, seed = NULL) {
     if (!rlang::is_call(call)) {
-        cli::cli_abort("{.arg call} should be a {.cls call} object")
+        cli::cli_abort("{.arg call} must be a {.cls call} object")
     }
     if (!(is.null(deps) || rlang::is_character(deps))) {
-        cli::cli_abort("{.arg deps} should be a scalar {.cls character} or {.val NULL}")
+        cli::cli_abort("{.arg deps} must be a scalar {.cls character} or {.val NULL}")
     }
     if (!rlang::is_scalar_logical(finished)) {
-        cli::cli_abort("{.arg finished} should be a scalar {.cls logical}")
+        cli::cli_abort("{.arg finished} must be a scalar {.cls logical}")
     }
     if (!(is.null(return) || rlang::is_scalar_character(return) || rlang::is_scalar_logical(return))) {
-        cli::cli_abort("{.arg return} should be a scalar {.cls character} or {.cls character}, or {.val NULL}")
+        cli::cli_abort("{.arg return} must be a scalar {.cls character} or {.cls character}, or {.val NULL}")
     }
     if (isTRUE(seed)) {
         seed <- digest::digest2int(digest::digest(call, "crc32"), seed = 0L)
     } else if (rlang::is_scalar_double(seed) || rlang::is_scalar_integer(seed)) {
         seed <- as.integer(seed)
-    } else if (!(is.null(seed) || isFALSE(seed))) {
-        cli::cli_abort("{.arg seed} should be a scalar {.cls logical} or {.cls numeric}, or {.val NULL}")
+    } else if (!(is.null(seed) || rlang::is_scalar_logical(seed))) {
+        cli::cli_abort("{.arg seed} must be a scalar {.cls logical} or {.cls numeric}, or {.val NULL}")
     }
     structure(
         list(
@@ -131,52 +131,3 @@ new_step <- function(call, deps = NULL, finished = FALSE, return = NULL, seed = 
 #' @keywords internal
 #' @noRd
 is_step <- function(x) inherits(x, "step")
-
-#' Run step call command
-#' Run step in a mask environment.
-#' @param step A step object.
-#' @param mask The environment used to implement data mask, Objects in `mask`
-#' have priority over those in `envir`.
-#' @param envir The environment in which to evaluate the `call` in step.
-#' @keywords internal
-#' @noRd
-run_step <- function(step, mask = NULL, envir = rlang::caller_env()) {
-    if (rlang::is_scalar_integer(step$seed)) {
-        old_seed <- rlang::env_get(globalenv(), ".Random.seed", default = NULL)
-        if (is.null(old_seed)) {
-            on.exit(rm(".Random.seed", envir = globalenv()))
-        } else {
-            on.exit(rlang::env_bind(globalenv(), .Random.seed = old_seed))
-        }
-        set.seed(step$seed)
-    }
-    mask <- rlang::new_data_mask(mask)
-    mask$.data <- rlang::as_data_pronoun(mask)
-    rlang::eval_tidy(step$call, data = mask, env = envir)
-}
-
-assert_step <- function(step) {
-    if (!is_step(step)) {
-        cli::cli_abort(c(
-            "{.var step} must be a {.cls step} object",
-            "x" = "You've supplied a {.cls {class(step)}}."
-        ))
-    }
-}
-
-reset_step <- function(step) {
-    assert_step(step)
-    step$finished <- FALSE
-    step
-}
-
-finish_step <- function(step) {
-    assert_step(step)
-    step$finished <- TRUE
-    step
-}
-
-is_finished <- function(step) {
-    assert_step(step)
-    isTRUE(step$finished)
-}

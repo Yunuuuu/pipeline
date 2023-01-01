@@ -28,6 +28,21 @@ assert_class <- function(x, class, arg = rlang::caller_arg(x), call = rlang::cal
     }
 }
 
+#' Report if an argument is a specific class
+#' @keywords internal
+#' @noRd
+assert_scalar_chr <- function(x, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
+    if (!rlang::is_scalar_character(x)) {
+        cli::cli_abort(
+            c(
+                "{.arg {arg}} must be a scalar {.cls character}",
+                "x" = "You've supplied a length {.val length(x)} {.cls {class(x)}}."
+            ),
+            call = call
+        )
+    }
+}
+
 #' implement similar purrr::imap function
 #' @note this function won't keep the names of .x in the final result
 #' @keywords internal

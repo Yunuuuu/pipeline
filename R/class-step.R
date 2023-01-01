@@ -147,13 +147,17 @@ define_step <- function(x = NULL, default = NULL, ...) {
     } else if (is_step(x)) {
         step <- x
     } else if (is.list(x)) {
+        default$call <- call_standardise(default$call)
         default$call <- rlang::call_modify(default$call, !!!x)
         step <- default
-    } else if (rlang::is_expression(x)) {
+    } else if (rlang::is_call(x)) {
         default$call <- x
         step <- default
     } else {
-        cli::cli_abort("{.arg x} should be {.val NULL}, {.cls list}, {.cls step} or {.cls expression}.")
+        cli::cli_abort(c(
+            "{.arg x} should be {.val NULL}, {.cls list}, {.cls step} or {.cls call}.",
+            "x" = "You've supplied a {.cls {class(call)}}."
+        ))
     }
     step <- modify_list(step,
         restrict = c("deps", "finished", "return", "seed"),

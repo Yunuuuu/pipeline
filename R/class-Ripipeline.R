@@ -75,21 +75,28 @@ Ripipeline <- R6::R6Class("Ripipeline",
             private$check_id(id, exist = TRUE)
             step <- private$step_tree[[id]]
             call <- rlang::enquo(call)
-            if (!is.null(rlang::quo_get_expr(call))) {
+            if (!is.null(rlang::get_expr(call))) {
                 step$call <- call
                 if (isTRUE(reset)) {
                     self$reset_step(id = id, downstream = TRUE)
                 }
             } else {
-                step$call <- call_standardise(step$call)
+                step$call <- rlang::set_expr(
+                    step$call,
+                    call_standardise(step$call)
+                )
                 dots_list <- rlang::enquos(...)
                 if (length(dots_list)) {
-                    step$call <- rlang::call_modify(step$call, !!!dots_list)
+                    step$call <- rlang::set_expr(
+                        step$call,
+                        rlang::call_modify(step$call, !!!dots_list)
+                    )
                     if (isTRUE(reset)) {
                         self$reset_step(id = id, downstream = TRUE)
                     }
                 }
             }
+            private$step_tree[[id]] <- step
             invisible(self)
         },
         modify_step = function(id, deps, finished, return, seed, call = NULL, ..., reset = TRUE) {
@@ -172,12 +179,16 @@ Ripipeline <- R6::R6Class("Ripipeline",
                     cli::cli_abort("{.arg to} has no returned result symbol")
                 }
             }
-            # run switch 
+            # run switch
             step$deps <- union(setdiff(step$deps, from), to)
-            step$call <- change_expr(
+
+            step$call <- rlang::set_expr(
                 step$call,
-                from = rlang::sym(from_return_symbol),
-                to = rlang::sym(to_return_symbol)
+                value = change_expr(
+                    step$call,
+                    from = rlang::sym(from_return_symbol),
+                    to = rlang::sym(to_return_symbol)
+                )
             )
             private$step_tree[[id]] <- step
             invisible(self)
@@ -350,7 +361,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
             # targets are the steps we want to run until if NULL, all steps
             # without child steps will be used
             targets <- rlang::enquo(targets)
-            if (is.null(rlang::quo_get_expr(targets))) {
+            if (is.null(rlang::get_expr(targets))) {
                 targets <- names(igraph::V(step_graph))[
                     igraph::degree(step_graph, mode = "out") == 0L
                 ]

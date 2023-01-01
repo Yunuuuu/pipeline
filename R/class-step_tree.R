@@ -102,7 +102,7 @@ build_step_graph_helper <- function(step_list, add_attrs = FALSE) {
     # add node attributes
     if (isTRUE(add_attrs)) {
         step_graph <- add_step_graph_attrs(
-            deps_graph = step_graph,
+            step_graph = step_graph,
             step_list = step_list,
             step_deps = step_deps
         )

@@ -139,7 +139,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
             if (length(missed_deps)) {
                 cli::cli_abort(c(
                     "Can't find all dependencies in {.var step_tree}",
-                    x = "Missing {.val {length(missed_deps)}} dependenc{?y/ies}: {missed_deps}"
+                    x = "Missing {.val {length(missed_deps)}} dependenc{?y/ies}: {.val {missed_deps}}"
                 ))
             }
             invisible(self)
@@ -254,14 +254,16 @@ Ripipeline <- R6::R6Class("Ripipeline",
                     v = target, mode = "in"
                 )
                 target_deps <- names(target_deps)
-
-                # check if all dependencies exist in step_tree
-                self$check_step_deps(target_deps)
+                
+                # Output targets information
                 cli_par_id <- cli::cli_par()
                 cli::cli_rule(center = "Runing target: {.field {target}}")
                 cli::cli_inform(
                     "Including {.val {length(target_deps)}} step{?s}"
                 )
+
+                # check if all dependencies exist in step_tree
+                self$check_step_deps(target_deps)
 
                 # since levels is integer, we simply factor it so split can sort
                 # the list in the order of the levels

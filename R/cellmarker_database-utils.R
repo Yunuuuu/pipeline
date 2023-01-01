@@ -15,8 +15,7 @@
 #' containing the matched markers from CellMarker data, the row will be sorted
 #' descendingly by the number of matched markers.
 #' @export
-cellmarker_search <- function(markers, species = "human", internal = NULL) {
-    # nolint start
+cellmarker_search <- function(markers, species = "human", internal = NULL) { 
     data <- data.table::copy(cellmarker_get(species, internal))
     # Since gene_list may contain duplicated values with different case
     # it's better to use the input markers as the reference
@@ -39,7 +38,6 @@ cellmarker_search <- function(markers, species = "human", internal = NULL) {
     data <- data[targeted_size > 0L][
         order(-targeted_size, na.last = TRUE)
     ]
-    # nolint end
     data.table::setDF(data)[]
 }
 
@@ -59,12 +57,12 @@ cellmarker_get <- function(species = "human", internal = NULL) {
     }
 }
 
-cellmarker_prepare <- function(data) {
-    data[, gene_list := .mapply( # nolint
+cellmarker_prepare <- function(data) { # nolint styler: off
+    data[, gene_list := .mapply( # nolint styler: off
         function(...) {
             Reduce(union, list(...))
         },
-        unname(lapply(.SD, function(markers) {
+        unname(lapply(.SD, function(markers) { # nolint styler: off
             markers_list <- strsplit(
                 gsub("\\s*\\[\\s*|\\s*\\]\\s*", "", markers, perl = TRUE),
                 "\\s*,\\s*",

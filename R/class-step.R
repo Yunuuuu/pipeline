@@ -20,8 +20,8 @@
 #' evaluated from `call` won't be saved. Otherwise, the results will be saved.
 #' if `TRUE` or `NULL`, the result name will be the same with the name in
 #' `step_tree` object. Or a sclar `character` define the name.
-#' @param seed  A scalar `logical`, `numeric`, or `NULL`. a `logical` value
-#' indicates whether to set seed when evaluated the command in "call". if
+#' @param seed A scalar `logical`, `numeric`, or `NULL`. a `logical` value
+#' indicates whether to set seed when evaluated the expression in "call". if
 #' `TRUE`, the call is evaluated with a seed (based on the hash of the call
 #' object). if `numeric`, seed will be set by `set.seed(as.integer(seed))`.
 #' Otherwise, the call is evaluated without seed.
@@ -131,3 +131,33 @@ new_step <- function(call, deps = NULL, finished = FALSE, return = NULL, seed = 
 #' @keywords internal
 #' @noRd
 is_step <- function(x) inherits(x, "step")
+
+#' Create a step object based on a default step
+#'
+#' @param x A object to define the step, if NULL, will use the default value.
+#' @param default A step object, should always use a standardized call in the
+#'  step object.
+#' @param ... Other arguments to define [step].
+#' @return An step object
+#' @keywords internal
+#' @noRd
+define_step <- function(x = NULL, default = NULL, ...) {
+    if (is.null(x)) {
+        step <- default
+    } else if (is_step(x)) {
+        step <- x
+    } else if (is.list(x)) {
+        default$call <- rlang::call_modify(default$call, !!!x)
+        step <- default
+    } else if (rlang::is_expression(x)) {
+        default$call <- x
+        step <- default
+    } else {
+        cli::cli_abort("{.arg x} should be {.val NULL}, {.cls list}, {.cls step} or {.cls expression}.")
+    }
+    step <- modify_list(step,
+        restrict = c("deps", "finished", "return", "seed"),
+        ...
+    )
+    step
+}

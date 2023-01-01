@@ -94,3 +94,15 @@ modify_list <- function(x, restrict = NULL, ...) {
     }
     x
 }
+
+call_standardise <- function (call, env = rlang::caller_env()) {
+    expr <- rlang::get_expr(call)
+    env <- rlang::get_env(call, env)
+    fn <- rlang::eval_bare(rlang::node_car(expr), env)
+    if (rlang::is_primitive(fn)) {
+        call
+    } else {
+        matched <- rlang::call_match(expr, fn, defaults = TRUE)
+        rlang::set_expr(call, matched)
+    }
+}

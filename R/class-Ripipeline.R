@@ -147,32 +147,29 @@ Ripipeline <- R6::R6Class("Ripipeline",
         switch_step_dep = function(id, from, to, force = FALSE) {
             private$check_id(id, exist = TRUE)
             step <- private$step_tree[[id]]
-            # check from argument
-            if (!from %in% step$deps) {
-                cli::cli_abort("{.arg from} must exist in the deps of step {.val {id}}")
-            }
-            from_return_symbol <- self$get_return_name(id = from)
-            if (is.null(from_return_symbol)) {
-                cli::cli_abort("{.arg from} has no returned result symbol")
+            symbol_list <- vector("list", 2L)
+            # check from and to arguments
+            for (i in 1:2) {
+                arg <- c("from", "to")[[i]]
+                name <- list(from, to)[[i]]
+                private$check_id(name, exist = FALSE)
+                if (!name %in% step$deps) {
+                    if (isTRUE(force)) {
+                        symbol_list[[i]] <- name
+                    } else {
+                        cli::cli_abort(c(
+                            "{.arg {arg}} must exist in the {.var step_tree]",
+                            i = "You can force to proceed by enable {.arg force} where {.arg {arg}} will be regarded as the step returned result symbol" # nolint
+                        ))
+                    }
+                } else {
+                    symbol_list[[i]] <- self$get_return_name(id = name)
+                    if (is.null(symbol_list[[i]])) {
+                        cli::cli_abort("{.arg {arg}} has no returned result symbol")
+                    }
+                }
             }
 
-            # check to argument
-            private$check_id(to, exist = FALSE)
-            if (!to %in% names(private$step_tree)) {
-                if (isTRUE(force)) {
-                    to_return_symbol <- to
-                } else {
-                    cli::cli_abort(c(
-                        "{.arg to} must exist in the {.var step_tree]",
-                        i = "You can force to proceed by enable {.arg force} where {.arg to} will be regarded as the step returned result symbol" # nolint
-                    ))
-                }
-            } else {
-                to_return_symbol <- self$get_return_name(id = to)
-                if (is.null(to_return_symbol)) {
-                    cli::cli_abort("{.arg to} has no returned result symbol")
-                }
-            }
             # run switch
             step$deps <- union(setdiff(step$deps, from), to)
 
@@ -180,8 +177,8 @@ Ripipeline <- R6::R6Class("Ripipeline",
                 step$call,
                 value = change_expr(
                     step$call,
-                    from = rlang::sym(from_return_symbol),
-                    to = rlang::sym(to_return_symbol)
+                    from = rlang::sym(symbol_list[[1L]]),
+                    to = rlang::sym(symbol_list[[2L]])
                 )
             )
             private$step_tree[[id]] <- step

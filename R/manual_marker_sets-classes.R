@@ -42,16 +42,21 @@ manual_cell_marker_datasets <- structure(
 # convention: name should be the surname of the first author followed by the
 # years of the published article connected with "_"
 new_marker_set <- function(name, ..., reference) {
-    marker_set <- list(...)
+    marker_set <- rlang::list2(...)
     # every elements in ... should be named
-    check_marker_set(marker_set)
-    if (name %in% rlang::env_names(manual_cell_marker_datasets)) {
-        cli::cli_abort("Existing cell marker set found in datasets")
+    # validate_marker_set(marker_set) ? cannot use devtools::load_all() when
+    # enable this line.
+    
+    if (rlang::env_has(manual_cell_marker_datasets, nms = name)) {
+        cli::cli_abort("Existed cell marker set found in datasets")
     }
-    manual_cell_marker_datasets[[name]] <- structure(
-        marker_set,
-        class = "marker_set",
-        reference = reference
+    rlang::env_bind(
+        .env = manual_cell_marker_datasets,
+        !!name := structure(
+            marker_set,
+            class = "marker_set",
+            reference = reference
+        )
     )
 }
 
@@ -105,7 +110,7 @@ cli_list <- function(label, items, sep = ": ", add_num = TRUE) {
     cli::cli_li(message)
 }
 
-check_marker_set <- function(x) {
+validate_marker_set <- function(x) {
     x_type <- typeof(x)
     if (identical(x_type, "character")) {
         # No need names for character
@@ -114,9 +119,9 @@ check_marker_set <- function(x) {
         # for a list, we should check all elements have names,
         # and then recall this function to check every elments
         is_right <- list_has_element_names(x) &&
-            all(vapply(x, check_marker_set, logical(1L)))
+            all(vapply(x, validate_marker_set, logical(1L)))
     } else if (!is.null(x)) {
-        cli::cli_abort("all elements should be {.field NULL}, or a {.cls list} or a {.cls chracter}")
+        cli::cli_abort("all elements should be {.val NULL}, or a {.cls list} or a {.cls chracter}")
     }
     if (!is_right) {
         cli::cli_abort("all elements or sub-elements should be named")

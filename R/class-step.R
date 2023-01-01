@@ -55,11 +55,9 @@ new_step <- function(call, deps = NULL, finished = FALSE, return = NULL, seed = 
     if (!(is.null(return) || rlang::is_scalar_character(return) || rlang::is_scalar_logical(return))) {
         cli::cli_abort("{.arg return} must be a scalar {.cls character} or {.cls character}, or {.val NULL}")
     }
-    if (isTRUE(seed)) {
-        seed <- digest::digest2int(digest::digest(call, "crc32"), seed = 0L)
-    } else if (rlang::is_scalar_double(seed) || rlang::is_scalar_integer(seed)) {
-        seed <- as.integer(seed)
-    } else if (!(is.null(seed) || rlang::is_scalar_logical(seed))) {
+    if (!(is.null(seed) || rlang::is_scalar_logical(seed) ||
+        rlang::is_scalar_double(seed) ||
+        rlang::is_scalar_integer(seed))) {
         cli::cli_abort("{.arg seed} must be a scalar {.cls logical} or {.cls numeric}, or {.val NULL}")
     }
     structure(

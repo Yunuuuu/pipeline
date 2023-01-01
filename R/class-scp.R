@@ -13,17 +13,13 @@ Ripipeline <- R6::R6Class("Ripipeline",
             invisible(self)
         },
         set_step = function(id, ...) {
-            if (!rlang::is_scalar_character(id)) {
-                cli::cli_abort("{.arg id} must be a scalar {.cls character}")
-            }
+            assert_scalar_chr(id)
             private$step_tree[[id]] <- step(...)
             private$step_graph <- NULL
             invisible(self)
         },
         add_step = function(id, ...) {
-            if (!rlang::is_scalar_character(id)) {
-                cli::cli_abort("{.arg id} must be a scalar {.cls character}")
-            }
+            assert_scalar_chr(id)
             if (id %in% names(private$step_tree)) {
                 cli::cli_abort(c(
                     "Already existed {.field step}",
@@ -58,22 +54,21 @@ Ripipeline <- R6::R6Class("Ripipeline",
             invisible(self)
         },
         modify_step = function(id, call = NULL, ...) {
-            if (!rlang::is_scalar_character(id)) {
-                cli::cli_abort(c(
-                    "{.arg id} must be a scalar {.cls character}",
-                    "x" = "You've supplied a {.cls {class(id)}}."
-                ))
-            } else if (!id %in% names(step_tree)) {
-                cli::cli_abort("{.arg id} must in the {.arg step_tree}")
+            assert_scalar_chr(id)
+            if (!id %in% names(step_tree)) {
+                cli::cli_abort("{.arg id} must exist in the {.var step_tree}")
             }
             step <- private$step_tree[[id]]
             if (is.list(call)) {
+                step$call <- call_standardise(step$call)
                 step$call <- rlang::call_modify(step$call, !!!call)
-            } else if (rlang::is_expression(call)) {
+                self$reset_step(id = id, downstream = TRUE)
+            } else if (rlang::is_call(call)) {
                 step$call <- call
-            } else {
+                self$reset_step(id = id, downstream = TRUE)
+            } else if (!is.null(call)) {
                 cli::cli_abort(c(
-                    "{.arg call} must be a {.cls list} or {.arg expression}",
+                    "{.arg call} must be a {.cls list} or an {.arg call}",
                     "x" = "You've supplied a {.cls {class(call)}}."
                 ))
             }
@@ -81,6 +76,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
                 restrict = c("deps", "finished", "return", "seed"),
                 ...
             )
+            private$step_graph <- NULL
             invisible(self)
         },
         reset_step = function(id, downstream = TRUE) {
@@ -104,15 +100,15 @@ Ripipeline <- R6::R6Class("Ripipeline",
 
         #' methods for the operation in the attached environment
         #' Get single variable from the environment
-        get = function(nm) {
+        env_get = function(nm) {
             rlang::env_get(env = private$envir, nm = nm, inherit = FALSE)
         },
         #' Get multiple variable from the environment
-        get_list = function(nms) {
+        env_get_list = function(nms) {
             rlang::env_get_list(env = private$envir, nms = nms, inherit = FALSE)
         },
         #' Get multiple variable from the environment
-        bind = function(name = NULL, value) {
+        env_bind = function(name = NULL, value) {
             if (is.null(name)) {
                 name <- rlang::try_fetch(
                     rlang::as_name(rlang::ensym(value)),
@@ -128,15 +124,18 @@ Ripipeline <- R6::R6Class("Ripipeline",
             rlang::env_bind(.env = private$envir, !!name := value)
             invisible(self)
         },
+        env_names = function() {
+            rlang::env_names(private$envir)
+        },        
 
         #' following define dependencies methods
         #' Report if dependencies exist in step_tree
         check_step_deps = function(deps = NULL) {
             if (is.null(deps)) {
-                deps <- extract_step_deps(unclass(self$step_tree))
+                deps <- extract_step_deps(unclass(private$step_tree))
                 deps <- unlist(deps, recursive = FALSE, use.names = FALSE)
             }
-            missed_deps <- setdiff(deps, names(self$step_tree))
+            missed_deps <- setdiff(deps, names(private$step_tree))
             if (length(missed_deps)) {
                 cli::cli_abort(c(
                     "Can't find all dependencies in {.var step_tree}",
@@ -174,10 +173,13 @@ Ripipeline <- R6::R6Class("Ripipeline",
                 return(igraph::subcomponent(step_graph, v = from, mode = "out"))
             }
         },
-        plot_step_tree = function(layout = igraph::layout_as_tree, ...) {
-            plot(self$build_step_graph(from = id, add_attrs = TRUE),
-                layout = layout, ...
-            )
+        plot_step_tree = function(target = NULL, layout = igraph::layout_as_tree, ...) {
+            if (is.null(target)) {
+                step_graph <- self$build_step_graph(add_attrs = TRUE)
+            } else {
+                step_graph <- self$build_step_graph(from = id, add_attrs = TRUE)
+            }
+            plot(step_graph, layout = layout, ...)
         },
 
         #' @param id The name of step object.
@@ -216,7 +218,7 @@ Ripipeline <- R6::R6Class("Ripipeline",
             mask$.data <- rlang::as_data_pronoun(mask)
             result <- rlang::eval_tidy(step$call, data = mask, env = envir)
             if (!isFALSE(step$return)) {
-                self$bind(name = return, value = result)
+                self$env_bind(name = return, value = result)
             }
             if (isTRUE(reset)) self$reset_step(id = id, downstream = TRUE)
             self$finish_step(id)
@@ -226,7 +228,9 @@ Ripipeline <- R6::R6Class("Ripipeline",
             step_list <- unclass(private$step_tree)
 
             # build dependencies graph
-            step_graph <- self$build_step_graph(add_attrs = FALSE)
+            step_graph <- self$build_step_graph(add_attrs = TRUE)
+            attrs <- igraph::vertex_attr(step_graph)[c("name", "levels")]
+            step_levels <- structure(attrs$levels, names = attrs$name)
 
             # targets are the steps we want to run until if NULL, all steps
             # without child steps will be used
@@ -246,27 +250,32 @@ Ripipeline <- R6::R6Class("Ripipeline",
 
             for (target in targets) {
                 # extract the deps_graph of each targets step
-                target_deps <- igraph::subcomponent(
-                    step_graph,
+                target_deps <- igraph::subcomponent(step_graph,
                     v = target, mode = "in"
                 )
-                attrs <- igraph::vertex_attr(target_deps)[c("name", "levels")]
-                cli::cli_inform(
-                    "Running {.val {length(attrs$name)}} step{?s} for {.field {target}} target"
-                )
+                target_deps <- names(target_deps)
 
                 # check if all dependencies exist in step_tree
-                self$check_step_deps(attrs$name)
-
-                # run targeted dependencies
+                self$check_step_deps(target_deps)
+                cli_par_id <- cli::cli_par()
+                cli::cli_rule(center = "Runing target: {.field {target}}")
                 cli::cli_inform(
-                    "Running {.val {length(attrs$name)}} step{?s} for target: {.field {target}}"
+                    "Including {.val {length(target_deps)}} step{?s}"
                 )
 
                 # since levels is integer, we simply factor it so split can sort
                 # the list in the order of the levels
-                step_ids_list <- split(attrs$name, factor(attrs$levels))
-                results_list[[target]] <- lapply(step_ids_list, function(ids) {
+                step_ids_list <- split(
+                    target_deps,
+                    factor(step_levels[target_deps])
+                )
+                lid <- cli::cli_ul()
+                results_list[[target]] <- imap(step_ids_list, function(ids, level) {
+                    cli_list(
+                        label = sprintf("level %s", level),
+                        items = ids,
+                        add_num = TRUE
+                    )
                     lapply(ids, function(id) {
                         self$run_step(
                             id = id, refresh = refresh,
@@ -275,6 +284,8 @@ Ripipeline <- R6::R6Class("Ripipeline",
                         )
                     })
                 })
+                cli::cli_end(lid)
+                cli::cli_end(cli_par_id)
             }
             invisible(results_list)
         }

@@ -96,7 +96,8 @@ modify_list <- function(x, restrict = NULL, ...) {
     x
 }
 
-call_standardise <- function (call, env = rlang::caller_env()) {
+# call object analysis ----------------------------------------
+call_standardise <- function(call, env = rlang::caller_env()) {
     expr <- rlang::get_expr(call)
     env <- rlang::get_env(call, env)
     fn <- rlang::eval_bare(rlang::node_car(expr), env)
@@ -108,6 +109,61 @@ call_standardise <- function (call, env = rlang::caller_env()) {
     }
 }
 
+find_expr_deps <- function(expr) {
+    # substitute "~" with "base::identity"
+    expr <- rlang::call2(rlang::expr(substitute), expr,
+        env = rlang::expr(list(`~` = base::identity)),
+        .ns = "base"
+    )
+    expr <- rlang::eval_bare(expr, env = rlang::base_env())
+    codetools::findGlobals(rlang::new_function(args = NULL, body = expr))
+}
+
+change_expr <- function(expr, from, to) {
+    switch(expr_type(expr),
+
+        # special cases 
+        # for missing argument in pairlist
+        missing = rlang::missing_arg(),
+
+        # seems like this will always live in the end of anonymous function call
+        # ?
+        integer = expr,
+
+        # Base cases
+        constant = ,
+        symbol = if (identical(expr, from)) to else expr,
+
+        # Recursive cases
+        call = list_to_call(lapply(expr, change_expr, from = from, to = to)),
+        pairlist = rlang::pairlist2(
+            !!!lapply(expr, change_expr, from = from, to = to)
+        ),
+        cli::cli_abort("Don't know how to handle type {.cls {expr_type(expr)}}")
+    )
+}
+
+list_to_call <- function(x) {
+    rlang::call2(x[[1L]], !!!x[-1L])
+}
+
+expr_type <- function(x) {
+    if (rlang::is_missing(x)) {
+        "missing"
+    } else if (rlang::is_syntactic_literal(x)) {
+        "constant"
+    } else if (is.symbol(x)) {
+        "symbol"
+    } else if (is.call(x)) {
+        "call"
+    } else if (is.pairlist(x)) {
+        "pairlist"
+    } else {
+        typeof(x)
+    }
+}
+
+# cli output helper
 cli_list <- function(label, items, sep = ": ", add_num = TRUE) {
     items <- cli::cli_vec(items, list("vec-trunc" = 3L))
     message <- "{.field {label}}{sep}{.val {items}}"

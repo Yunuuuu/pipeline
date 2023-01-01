@@ -10,6 +10,9 @@ has_names <- function(x) {
     !is.na(nms) & nms != ""
 }
 
+#' @export
+rlang::zap
+
 #' Report if an argument is a specific class
 #' @keywords internal
 #' @noRd
@@ -60,5 +63,19 @@ rename <- function(x, replace) {
         old_names <- names(replace)
     }
     names(x)[match(old_names, current_names)] <- as.vector(replace)
+    x
+}
+
+modify_list <- function(x, restrict = NULL, ...) {
+    dots_list <- rlang::list2(...)
+    dots_list <- dots_list[has_names(dots_list)]
+    if (is.null(restrict)) {
+        restrict <- names(dots_list)
+    } else {
+        restrict <- intersect(restrict, names(dots_list))
+    }
+    for (name in dots_list) {
+        x[name] <- dots_list[name]
+    }
     x
 }

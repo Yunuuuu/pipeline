@@ -29,7 +29,7 @@ assert_class <- function(x, class, arg = rlang::caller_arg(x), call = rlang::cal
     }
 }
 
-#' Report if an argument is a specific class
+#' Report if an argument is a scalar character
 #' @keywords internal
 #' @noRd
 assert_scalar_chr <- function(x, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
@@ -37,14 +37,14 @@ assert_scalar_chr <- function(x, arg = rlang::caller_arg(x), call = rlang::calle
         cli::cli_abort(
             c(
                 "{.arg {arg}} must be a scalar {.cls character}",
-                "x" = "You've supplied a length {.val length(x)} {.cls {class(x)}}."
+                "x" = "You've supplied a length {.val {length(x)}} {.cls {class(x)}}."
             ),
             call = call
         )
     }
 }
 
-#' implement similar purrr::imap function
+#' Implement similar purrr::imap function
 #' @note this function won't keep the names of .x in the final result
 #' @keywords internal
 #' @noRd
@@ -96,7 +96,7 @@ modify_list <- function(x, restrict = NULL, ...) {
     x
 }
 
-# call object analysis ----------------------------------------
+# call object utils ----------------------------------------
 call_standardise <- function(call, env = rlang::caller_env()) {
     expr <- rlang::get_expr(call)
     env <- rlang::get_env(call, env)
@@ -127,7 +127,7 @@ change_expr <- function(expr, from, to) {
         missing = rlang::missing_arg(),
 
         # seems like this will always live in the end of anonymous function call
-        # ?
+        # we just return as it is
         integer = expr,
 
         # Base cases

@@ -1,5 +1,5 @@
-# R interactive workflow
-RIWorkflow <- R6::R6Class("RIWorkflow",
+# R pipeline
+Pipeline <- R6::R6Class("Pipeline",
     public = list(
         initialize = function(..., data = list(), envir = NULL) {
             if (is.null(envir)) {

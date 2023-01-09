@@ -121,16 +121,6 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
     )
 }
 
-`+.step` <- function(x, y) {
-    if (missing(y)) {
-        cli::cli_abort(c(
-            "Cannot use {.code +} with a single argument",
-            "i" = "Did you accidentally put {.code +} on a new line?"
-        ))
-    }
-    new_step_tree(x, y)
-}
-
 #' Reports whether x is an `step` object
 #' @param x An object to test
 #' @keywords internal

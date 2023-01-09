@@ -7,33 +7,32 @@ NULL
 #' @noRd
 new_step_tree <- function(...) {
     step_list <- rlang::list2(...)
-    structure(step_list, class = "step_tree")
+    if (!all(vapply(step_list, is_step, logical(1L)))) {
+        cli::cli_abort(
+            "all items must be {.cls step} object."
+        )
+    }
+    structure(
+        step_list,
+        names = vapply(step_list, "[[", character(1L), "id"),
+        class = c("step_tree", "Pipeline")
+    )
 }
 
 validate_step_tree <- function(step_tree) {
-    values <- unclass(step_tree)
-    ids <- names(values)
-    if (is.null(ids) || any(is.na(ids) | ids == "")) {
-        cli::cli_abort("all items in {.var step_tree} must be named.")
-    }
-    dup_ids <- ids[duplicated(ids)]
+    ids <- names(step_tree)
+    dup_ids <- unique(ids[duplicated(ids)])
     if (length(dup_ids)) {
         cli::cli_abort(c(
-            "all ids in {.var step_tree} must not be duplicated",
+            "all ids in {.var step_tree} must be unique",
             x = "duplicated names: {dup_ids]"
-        ))
-    }
-    if (!all(vapply(values, is_step, logical(1L)))) {
-        # nolint
-        cli::cli_abort(c(
-            "all items in {.var step_tree} must be {.cls step} object.",
-            i = "try to use {.fn step_tree} to create it"
         ))
     }
     step_tree
 }
 
 step_tree <- function(...) {
+    rlang::check_dots_unnamed()
     validate_step_tree(new_step_tree(...))
 }
 
@@ -51,13 +50,8 @@ is_step_tree <- function(x) inherits(x, "step_tree")
     step_tree(!!!NextMethod())
 }
 
-`$.step_tree` <- function(x, id) {
-    NextMethod()
-}
-
-`$<-.step_tree` <- function(x, id, value) {
-    step_tree(!!!NextMethod())
-}
+`$.step_tree` <- `[[.step_tree`
+`$<-.step_tree` <- `[[<-.step_tree`
 
 `[.step_tree` <- function(x, id) {
     step_tree(!!!NextMethod())

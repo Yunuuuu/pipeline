@@ -18,7 +18,7 @@ data. If \code{NULL}, this will be determined automatically; if the CellMarker
 data has been downloaded once, namely, we have already used this function
 once with a \code{internal} value \code{FALSE}, then the \code{NULL} will indicate \code{FALSE}.
 Otherwise \code{TRUE}. The internal data was downloaded from CellMarker on
-2022-12-04.}
+2023-01-10.}
 }
 \value{
 a data.frame of the searching results. A column named \code{targeted}

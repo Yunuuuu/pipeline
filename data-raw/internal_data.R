@@ -12,5 +12,5 @@ cellmarker_database <- lapply(cellmarker_database, cellmarker_prepare)
 usethis::use_data(
     cellmarker_database,
     internal = TRUE, overwrite = TRUE,
-    compress = "gzip"
+    compress = "xz", version = 3
 )

@@ -10,12 +10,12 @@
 #' data has been downloaded once, namely, we have already used this function
 #' once with a `internal` value `FALSE`, then the `NULL` will indicate `FALSE`.
 #' Otherwise `TRUE`. The internal data was downloaded from CellMarker on
-#' 2022-12-04.
+#' 2023-01-10.
 #' @return a data.frame of the searching results. A column named `targeted`
 #' containing the matched markers from CellMarker data, the row will be sorted
 #' descendingly by the number of matched markers.
 #' @export
-cellmarker_search <- function(markers, species = "human", internal = NULL) { 
+cellmarker_search <- function(markers, species = "human", internal = NULL) {
     data <- data.table::copy(cellmarker_get(species, internal))
     # Since gene_list may contain duplicated values with different case
     # it's better to use the input markers as the reference

@@ -2,8 +2,8 @@
 % Please edit documentation in R/scp-package.R
 \docType{package}
 \name{scp-package}
-\alias{scp}
 \alias{scp-package}
+\alias{_PACKAGE}
 \title{scp: Single Cell Pipeline}
 \description{
 What the package does (one paragraph).

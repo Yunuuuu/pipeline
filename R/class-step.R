@@ -10,8 +10,8 @@
 #' in another environment other than the current environment. You should use
 #' [new_step] or quote the expression firstly then use
 #' <[`!!`][rlang::injection-operator]> to inject the call expression in [step].
-#' @param deps A character vector defines the upstream steps to run before
-#' runing this step.
+#' @param deps A character vector or `NULL` defines the upstream steps to run
+#' before runing this step. `NULL` means no dependencies.
 #' @param finished A scalar `logical` indicates whether this step has been
 #' evaluated.
 #' @param return A scalar `logical` indicates whether to keep the returned

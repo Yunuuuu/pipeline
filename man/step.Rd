@@ -45,8 +45,8 @@ in another environment other than the current environment. You should use
 \link{new_step} or quote the expression firstly then use
 <\code{\link[rlang:injection-operator]{!!}}> to inject the call expression in \link{step}.}
 
-\item{deps}{A character vector defines the upstream steps to run before
-runing this step.}
+\item{deps}{A character vector or \code{NULL} defines the upstream steps to run
+before runing this step. \code{NULL} means no dependencies.}
 
 \item{finished}{A scalar \code{logical} indicates whether this step has been
 evaluated.}

@@ -1,22 +1,13 @@
-#' util function to run step
+#' Run step
 #'
-#' The steps are splitted into two groups
-#'  - custom steps: usually run in a special manner.
-#'  - normal steps: just run the call command of step object.
 #' @param step A step object.
 #' @param self The public environment.
 #' @param private The private environment.
 #' @param envir The environment in which to evaluate step.
 #' @noRd
-eval_custom_step <- function(step, self, private, envir) {
-    switch(step$id,
-        unbind = rlang::env_unbind(env = private$envir, nms = step$nms)
-    )
-}
-
-#' @noRd
-eval_normal_step <- function(step, self, private, envir) {
-    # if there is any seed, we set seed
+eval_step <- function(step, self, private, envir) {
+    # if there is any seed, we set seed and then restore the existed seed in the
+    # globalenv()
     if (isTRUE(step$seed) || rlang::is_scalar_integer(step$seed) || rlang::is_scalar_double(step$seed)) {
         if (isTRUE(step$seed)) {
             seed <- digest::digest2int(
@@ -26,10 +17,7 @@ eval_normal_step <- function(step, self, private, envir) {
         } else {
             seed <- as.integer(step$seed)
         }
-        old_seed <- rlang::env_get(
-            globalenv(), ".Random.seed",
-            default = NULL
-        )
+        old_seed <- rlang::env_get(globalenv(), ".Random.seed", default = NULL)
         if (is.null(old_seed)) {
             on.exit(rm(".Random.seed", envir = globalenv()))
         } else {

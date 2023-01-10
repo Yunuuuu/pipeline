@@ -94,7 +94,7 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 #' @export
 #' @rdname step
 `[[<-.step` <- function(x, i, value) {
-    rlang::exec(new_step, !!!modify_list(x, !!i := value))
+    rlang::exec(new_step, !!!modify_list(unclass(x), !!i := value))
 }
 
 #' @export
@@ -114,7 +114,7 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 #' @export
 #' @rdname step
 `[<-.step` <- function(x, i, value) {
-    rlang::exec(new_step, !!!modify_list(x, !!i := value))
+    rlang::exec(new_step, !!!modify_list(unclass(x), !!i := value))
 }
 
 #' Reports whether x is an `step` object

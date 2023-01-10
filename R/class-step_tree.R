@@ -6,7 +6,7 @@ NULL
 #' low-level constructor
 #' @noRd
 new_step_tree <- function(...) {
-    step_list <- rlang::list2(...)
+    step_list <- rlang::dots_list(..., .named = NULL)
     if (!all(vapply(step_list, is_step, logical(1L)))) {
         cli::cli_abort(
             "all items must be {.cls step} object."
@@ -47,22 +47,24 @@ is_step_tree <- function(x) inherits(x, "step_tree")
 }
 
 `[[<-.step_tree` <- function(x, id, value) {
-    step_tree(!!!NextMethod())
+    if (rlang::is_zap(value)) value <- NULL
+    new_step_tree(!!!NextMethod())
 }
 
 `$.step_tree` <- `[[.step_tree`
 `$<-.step_tree` <- `[[<-.step_tree`
 
 `[.step_tree` <- function(x, id) {
-    step_tree(!!!NextMethod())
+    new_step_tree(!!!NextMethod())
 }
 
 `[<-.step_tree` <- function(x, id, value) {
-    step_tree(!!!NextMethod())
+    if (rlang::is_zap(value)) value <- NULL
+    new_step_tree(!!!NextMethod())
 }
 
-#' @return a list of character vector, if a step has no dependencies, NA will be
-#' returned.
+#' @return a list of character vector, if a step has no dependencies, `NA` will
+#'   be returned.
 #' @keywords internal
 #' @noRd
 extract_step_deps <- function(step_list) {

@@ -28,6 +28,7 @@ environment.
 \item \href{#method-Pipeline-env_get}{\code{Pipeline$env_get()}}
 \item \href{#method-Pipeline-env_get_list}{\code{Pipeline$env_get_list()}}
 \item \href{#method-Pipeline-env_bind}{\code{Pipeline$env_bind()}}
+\item \href{#method-Pipeline-env_unbind}{\code{Pipeline$env_unbind()}}
 \item \href{#method-Pipeline-env_move}{\code{Pipeline$env_move()}}
 \item \href{#method-Pipeline-env_names}{\code{Pipeline$env_names()}}
 \item \href{#method-Pipeline-clone}{\code{Pipeline$clone()}}
@@ -402,6 +403,23 @@ Bind symbols to object in the attached environment.
 \describe{
 \item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, Named objects
 (env_bind()). Use zap() to remove bindings.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Pipeline-env_unbind"></a>}}
+\if{latex}{\out{\hypertarget{method-Pipeline-env_unbind}{}}}
+\subsection{Method \code{env_unbind()}}{
+Remove bindings from the attached environment.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$env_unbind(nms)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{nms}}{A character vector of binding names to remove.}
 }
 \if{html}{\out{</div>}}
 }

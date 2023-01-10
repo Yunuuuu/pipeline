@@ -274,6 +274,13 @@ Pipeline <- R6::R6Class("Pipeline",
             invisible(self)
         },
         #' @description
+        #' Remove bindings from the attached environment.
+        #' @param nms A character vector of binding names to remove.
+        env_unbind = function(nms) {
+            rlang::env_unbind(.env = private$envir, nms = nms)
+            invisible(self)
+        },
+        #' @description
         #' Move variable from a environment to the attached environment
         #' @param variable A single symbol.
         env_move = function(variable) {

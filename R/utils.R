@@ -17,8 +17,8 @@ rlang::zap
 #' Report if an argument is a specific class
 #' @keywords internal
 #' @noRd
-assert_class <- function(x, class, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
-    if (!inherits(x, class)) {
+assert_class <- function(x, is_fn, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
+    if (!is_fn(x)) {
         cli::cli_abort(
             c(
                 "{.arg {arg}} must be a {.cls {class}} object",
@@ -82,16 +82,30 @@ rename <- function(x, replace) {
     x
 }
 
-modify_list <- function(x, restrict = NULL, ...) {
+# `NULL` passed to ... will also be kept
+modify_list <- function(x, ..., restrict = NULL) {
     dots_list <- rlang::list2(...)
-    dots_list <- dots_list[has_names(dots_list)]
+    dots_has_names <- has_names(dots_list)
+    if (!all(dots_has_names)) {
+        cli::cli_warn(c(
+            "All items should be named",
+            "!" = "Only use named items.",
+            "!" = "A total of {.val {sum(!dots_has_names)}} item{?s} will be omitted"
+        ))
+        dots_list <- dots_list[dots_has_names]
+    }
     if (is.null(restrict)) {
         restrict <- names(dots_list)
     } else {
         restrict <- intersect(restrict, names(dots_list))
     }
-    for (name in dots_list) {
-        x[name] <- dots_list[name]
+    for (name in names(dots_list)) {
+        value <- dots_list[[name]]
+        if (rlang::is_zap(value)) {
+            x[[name]] <- NULL
+        } else {
+            x[name] <- list(value)
+        }
     }
     x
 }
@@ -122,7 +136,7 @@ find_expr_deps <- function(expr) {
 change_expr <- function(expr, from, to) {
     switch(expr_type(expr),
 
-        # special cases 
+        # special cases
         # for missing argument in pairlist
         missing = rlang::missing_arg(),
 

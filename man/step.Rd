@@ -9,26 +9,36 @@
 \alias{$<-.step}
 \alias{[.step}
 \alias{[<-.step}
-\title{Build a \code{step} object
-A \code{step} object define the command to run in the pipeline.}
+\title{Build a \code{step} object}
 \usage{
-step(call, deps = NULL, finished = FALSE, return = NULL, seed = NULL)
+step(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...)
 
-new_step(call, deps = NULL, finished = FALSE, return = NULL, seed = NULL)
+new_step(
+  id,
+  call,
+  deps = NULL,
+  finished = FALSE,
+  return = TRUE,
+  seed = FALSE,
+  ...
+)
 
-\method{[[}{step}(x, name)
+\method{[[}{step}(x, i)
 
-\method{[[}{step}(x, name) <- value
+\method{[[}{step}(x, i) <- value
 
-\method{$}{step}(x, name)
+\method{$}{step}(x, i)
 
-\method{$}{step}(x, name) <- value
+\method{$}{step}(x, i) <- value
 
-\method{[}{step}(x, name)
+\method{[}{step}(x, i)
 
-\method{[}{step}(x, name) <- value
+\method{[}{step}(x, i) <- value
 }
 \arguments{
+\item{id}{A scalar character indicates the identification of the step. Must
+be unique across the \code{step_tree}.}
+
 \item{call}{The command to run. Notes: this will be enclosed by
 <\code{\link[rlang:enquo]{rlang::enquo()}}> to bundle the environment of users. If you use the step
 in another environment other than the current environment. You should use
@@ -41,28 +51,31 @@ runing this step.}
 \item{finished}{A scalar \code{logical} indicates whether this step has been
 evaluated.}
 
-\item{return}{A scalar \code{logical}, \code{character}, or \code{NULL}. a \code{logical} value
-indicates whether to keep the returned value. if \code{FALSE}, the result
-evaluated from \code{call} won't be saved. Otherwise, the results will be saved.
-if \code{TRUE} or \code{NULL}, the result name will be the same with the name in
-\code{step_tree} object. Or a sclar \code{character} define the name.}
+\item{return}{A scalar \code{logical} indicates whether to keep the returned
+value. if \code{FALSE}, the result evaluated from \code{call} won't be kept.}
 
-\item{seed}{A scalar \code{logical}, \code{numeric}, or \code{NULL}. a \code{logical} value
-indicates whether to set seed when evaluated the expression in "call". if
-\code{TRUE}, the call is evaluated with a seed (based on the hash of the call
-object). if \code{numeric}, seed will be set by \code{set.seed(as.integer(seed))}.
-Otherwise, the call is evaluated without seed.}
+\item{seed}{A scalar \code{logical} or \code{numeric}. a \code{logical} value indicates
+whether to set seed when evaluated the expression in "call". if \code{TRUE}, the
+call is evaluated with a seed (based on the hash of the call object).
+Otherwise, the call is evaluated without seed. if \code{numeric}, seed will be set
+by \code{set.seed(as.integer(seed))}.}
+
+\item{...}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> Other items to extend \code{step}
+object.}
 
 \item{x}{A \code{step} object from which to extract element(s) or in which to
 replace element(s).}
 
-\item{name}{The indices specifying elements to extract or replace}
+\item{i}{The indices specifying elements to extract or replace}
+
+\item{value}{The value to replace, \code{NULL} will be kept in the step object.
+use \code{zap()} to remove a component in the step.}
 }
 \value{
 A \code{step} object.
 }
 \description{
-steps define the command the run in the analysis pipeline
+A \code{step} object define the command to run in the pipeline.
 \itemize{
 \item step: user-friendly helper
 \item new_step: low-level constructor

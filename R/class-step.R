@@ -1,9 +1,6 @@
-# step class
-# user-friendly helper
 #' Build a `step` object
-#' A `step` object define the command to run in the pipeline.
 #' @description
-#' steps define the command the run in the analysis pipeline
+#' A `step` object define the command to run in the pipeline.
 #'  - step: user-friendly helper
 #'  - new_step: low-level constructor
 #' @param id A scalar character indicates the identification of the step. Must
@@ -24,17 +21,20 @@
 #' call is evaluated with a seed (based on the hash of the call object).
 #' Otherwise, the call is evaluated without seed. if `numeric`, seed will be set
 #' by `set.seed(as.integer(seed))`.
+#' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> Other items to extend `step`
+#'   object.
 #' @return A `step` object.
 #' @name step
 #' @export
-step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE) {
+step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
     new_step(
         id = id,
         call = rlang::enquo(call),
         deps = deps,
         finished = finished,
         return = return,
-        seed = seed
+        seed = seed,
+        ...
     )
 }
 
@@ -42,7 +42,7 @@ step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = 
 # steps define the command the run in the analysis pipeline
 #' @export
 #' @rdname step
-new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE) {
+new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
     if (!rlang::is_scalar_character(id)) {
         cli::cli_abort("{.arg id} must be a scalar {.cls character}")
     } else if (identical(id, "") || identical(id, NA_character_)) {
@@ -65,11 +65,16 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
         rlang::is_scalar_integer(seed))) {
         cli::cli_abort("{.arg seed} must be a scalar {.cls logical} or {.cls numeric}")
     }
+    dots_list <- rlang::dots_list(..., .homonyms = "error")
+    if (!all(has_names(dots_list))) {
+        cli::cli_abort("all items in ... must be named")
+    }
     structure(
-        list(
+        rlang::dots_list(
             id = id, call = call, deps = deps,
             finished = finished, return = return,
-            seed = seed
+            seed = seed,
+            !!!dots_list
         ),
         class = c("step", "Pipeline")
     )
@@ -78,21 +83,18 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 #' @export
 #' @param x A `step` object from which to extract element(s) or in which to
 #' replace element(s).
-#' @param name The indices specifying elements to extract or replace
+#' @param i The indices specifying elements to extract or replace
+#' @param value The value to replace, `NULL` will be kept in the step object.
+#'   use `zap()` to remove a component in the step.
 #' @rdname step
-`[[.step` <- function(x, name) {
+`[[.step` <- function(x, i) {
     NextMethod()
 }
 
 #' @export
 #' @rdname step
-`[[<-.step` <- function(x, name, value) {
-    step <- NextMethod()
-    new_step(
-        id = step$id,
-        call = step$call, deps = step$deps,
-        finished = step$finished, return = step$return
-    )
+`[[<-.step` <- function(x, i, value) {
+    rlang::exec(new_step, !!!modify_list(x, !!i := value))
 }
 
 #' @export
@@ -105,20 +107,14 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 
 #' @export
 #' @rdname step
-`[.step` <- function(x, name) {
+`[.step` <- function(x, i) {
     NextMethod()
 }
 
 #' @export
 #' @rdname step
-`[<-.step` <- function(x, name, value) {
-    step <- NextMethod()
-    new_step(
-        id = step$id,
-        call = step$call, deps = step$deps,
-        finished = step$finished, return = step$return,
-        seed = step$seed
-    )
+`[<-.step` <- function(x, i, value) {
+    rlang::exec(new_step, !!!modify_list(x, !!i := value))
 }
 
 #' Reports whether x is an `step` object
@@ -126,37 +122,3 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 #' @keywords internal
 #' @noRd
 is_step <- function(x) inherits(x, "step")
-
-#' Create a step object based on a default step
-#'
-#' @param x A object to define the step, if NULL, will use the default value.
-#' @param default A step object, should always use a standardized call in the
-#'  step object.
-#' @param ... Other arguments to define [step].
-#' @return An step object
-#' @keywords internal
-#' @noRd
-define_step <- function(x = NULL, default = NULL, ...) {
-    if (is.null(x)) {
-        step <- default
-    } else if (is_step(x)) {
-        step <- x
-    } else if (is.list(x)) {
-        default$call <- call_standardise(default$call)
-        default$call <- rlang::call_modify(default$call, !!!x)
-        step <- default
-    } else if (rlang::is_call(x)) {
-        default$call <- x
-        step <- default
-    } else {
-        cli::cli_abort(c(
-            "{.arg x} should be {.val NULL}, {.cls list}, {.cls step} or {.cls call}.",
-            "x" = "You've supplied a {.cls {class(call)}}."
-        ))
-    }
-    step <- modify_list(step,
-        restrict = c("deps", "finished", "return", "seed"),
-        ...
-    )
-    step
-}

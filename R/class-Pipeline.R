@@ -20,6 +20,7 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @return A new `Pipeline` object.
         initialize = function(..., data = list()) {
             private$envir <- rlang::new_environment(data = data)
+            self$env_bind(self = self)
             self$set_step_tree(...)
             invisible(self)
         },
@@ -341,7 +342,6 @@ Pipeline <- R6::R6Class("Pipeline",
         ### run the step and return the result
         run_step_internal = function(id, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
             step <- private$step_tree[[id]]
-
             # if this step has been finished, and refresh is FALSE
             # Just return the value from the environment
             if (step$finished && !isTRUE(refresh)) {
@@ -351,23 +351,17 @@ Pipeline <- R6::R6Class("Pipeline",
                     return(NULL)
                 }
             }
-            if (is_custom_step(step)) {
-                result <- eval_custom_step(step,
-                    self = self, private = private,
-                    envir = envir
-                )
-            } else {
-                result <- eval_normal_step(step,
-                    self = self, private = private,
-                    envir = envir
-                )
-            }
+            result <- eval_step(step,
+                self = self, private = private,
+                envir = envir
+            )
 
             if (step$return) {
                 self$env_bind(!!id := result)
             } else {
                 result <- NULL
             }
+
             if (isTRUE(reset)) {
                 private$reset_step_internal(
                     id = id, downstream = TRUE

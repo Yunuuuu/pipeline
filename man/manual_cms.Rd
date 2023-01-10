@@ -5,7 +5,7 @@
 \alias{get_markers}
 \alias{print.manual_cms}
 \alias{print.marker_set}
-\title{Cell markers datasets collected from research articles}
+\title{Cell markers sets collected from research articles}
 \usage{
 get_markers(name)
 

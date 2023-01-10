@@ -1,13 +1,13 @@
-#' Cell markers datasets collected from research articles
+#' Cell markers sets collected from research articles
 #'
-#' @description 
+#' @description
 #' We manullay collected some cell marker sets from research articles, these
 #' funciton juse provide some methods to operate with the manual cell marker
 #' sets (manual_cms).
-#' 
+#'
 #' `manual_cms` function just returns the database with a class of
 #' `manual_cell_marker_datasets` which has a specific `print` method.
-#' 
+#'
 #' `get_markers` function extract the specific marker set from the datasets,
 #' which return a `marker_set` class object.
 #' @param name The name of the marker set to extract. `name` usually is the
@@ -47,8 +47,8 @@ manual_cell_marker_datasets <- structure(
 new_marker_set <- function(name, ..., reference) { # nolint styler: off
     marker_set <- rlang::list2(...)
     # every elements in ... should be named
-    validate_marker_set(marker_set) 
-    
+    validate_marker_set(marker_set)
+
     if (rlang::env_has(manual_cell_marker_datasets, nms = name)) {
         cli::cli_abort("Existed cell marker set found in datasets")
     }

@@ -36,6 +36,30 @@ eval_step <- function(step, self, private, envir) {
     rlang::eval_tidy(step$call, data = mask, env = envir)
 }
 
+sub_step_graph <- function(step_graph, to = NULL, from = NULL) {
+    if (is.null(to) && is.null(from)) {
+        return(step_graph)
+    } else {
+        if (!is.null(from) && !is.null(to)) {
+            cli::cli_warn(c(
+                "Both {.arg from} and {.arg to} are setted.",
+                "!" = "Will only use {.arg to}."
+            ))
+        }
+        if (!is.null(to)) {
+            graph_ids <- igraph::subcomponent(
+                step_graph,
+                v = to, mode = "in"
+            )
+        } else if (!is.null(from)) {
+            graph_ids <- igraph::subcomponent(
+                step_graph,
+                v = from, mode = "out"
+            )
+        }
+        return(igraph::subgraph(step_graph, vids = graph_ids))
+    }
+}
 
 #' @return a list of character vector, if a step has no dependencies, `NA` will
 #'   be returned.

@@ -84,7 +84,7 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 
     # assert ...
     dots <- rlang::dots_list(..., .homonyms = "error")
-    if (!all(has_names(dots))) {
+    if (length(dots) && !all(has_names(dots))) {
         cli::cli_abort("all items in {.arg ...} must be named")
     }
     structure(

@@ -1,8 +1,8 @@
 #' Build a `step` object
 #' @description
 #' A `step` object define the command to run in the pipeline.
-#'  - step: user-friendly helper
-#'  - new_step: low-level constructor
+#'  - step: user-friendly helper, the `call` will be defused as a quosure.
+#'  - new_step: low-level constructor, the `call` will used as is.
 #' @param id A scalar character indicates the identification of the step. Must
 #' be unique across the `step_tree`.
 #' @param call The command to run. Notes: this will be enclosed by
@@ -43,31 +43,49 @@ step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = 
 #' @export
 #' @rdname step
 new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
-    if (!rlang::is_scalar_character(id)) {
-        cli::cli_abort("{.arg id} must be a scalar {.cls character}")
-    } else if (identical(id, "") || identical(id, NA_character_)) {
-        cli::cli_abort("{.arg id} can't be {.val \"\"} or {.val NA_character_}")
+    # assert id
+    assert_class(id, is.character, class = "character", null_ok = FALSE)
+    assert_length(id, 1L, null_ok = FALSE)
+    if (is.na(id) || id == "") {
+        cli::cli_abort("{.arg id} can't use {.val } or {.code NA_character_}")
+    } else if (id == "self") {
+        cli::cli_abort("{.arg id} can't use reserved names {.val self}")
     }
-    if (!rlang::is_call(call)) {
-        cli::cli_abort("{.arg call} must be a {.cls call} object")
+
+    # assert call
+    assert_class(call, rlang::is_call, class = "call", null_ok = FALSE)
+
+    # assert deps
+    assert_class(deps, is.character, class = "character", null_ok = TRUE)
+
+    # assert finished
+    assert_class(finished, is.logical, class = "logical", null_ok = FALSE)
+    assert_length(finished, 1L, null_ok = FALSE)
+    if (is.na(finished)) {
+        cli::cli_abort("{.arg finished} can't use {.code NA}")
     }
-    if (!(is.null(deps) || rlang::is_character(deps))) {
-        cli::cli_abort("{.arg deps} must be a scalar {.cls character} or {.val NULL}")
+
+    # assert return
+    assert_class(return, is.logical, class = "logical", null_ok = FALSE)
+    assert_length(return, 1L, null_ok = FALSE)
+    if (is.na(return)) {
+        cli::cli_abort("{.arg return} can't use {.code NA_character_}")
     }
-    if (!rlang::is_scalar_logical(finished)) {
-        cli::cli_abort("{.arg finished} must be a scalar {.cls logical}")
-    }
-    if (!rlang::is_scalar_logical(return)) {
-        cli::cli_abort("{.arg return} must be a scalar {.cls logical}")
-    }
+
+    # assert seed
     if (!(rlang::is_scalar_logical(seed) ||
         rlang::is_scalar_double(seed) ||
         rlang::is_scalar_integer(seed))) {
         cli::cli_abort("{.arg seed} must be a scalar {.cls logical} or {.cls numeric}")
     }
+    if (is.na(seed)) {
+        cli::cli_abort("{.arg seed} can't use {.code NA}")
+    }
+
+    # assert ...
     dots_list <- rlang::dots_list(..., .homonyms = "error")
     if (!all(has_names(dots_list))) {
-        cli::cli_abort("all items in ... must be named")
+        cli::cli_abort("all items in {.arg ...} must be named")
     }
     structure(
         rlang::dots_list(
@@ -84,8 +102,7 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 #' @param x A `step` object from which to extract element(s) or in which to
 #' replace element(s).
 #' @param i The indices specifying elements to extract or replace
-#' @param value The value to replace, `NULL` will be kept in the step object.
-#'   use `zap()` to remove a component in the step.
+#' @param value The value to replace with.
 #' @rdname step
 `[[.step` <- function(x, i) {
     NextMethod()
@@ -94,7 +111,7 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 #' @export
 #' @rdname step
 `[[<-.step` <- function(x, i, value) {
-    rlang::exec(new_step, !!!modify_list(unclass(x), !!i := value))
+    rlang::inject(new_step(!!!NextMethod()))
 }
 
 #' @export
@@ -114,10 +131,10 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 #' @export
 #' @rdname step
 `[<-.step` <- function(x, i, value) {
-    rlang::exec(new_step, !!!modify_list(unclass(x), !!i := value))
+    rlang::inject(new_step(!!!NextMethod()))
 }
 
-#' Reports whether x is an `step` object
+#' Reports whether x is a `step` object
 #' @param x An object to test
 #' @keywords internal
 #' @noRd

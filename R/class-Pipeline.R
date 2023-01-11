@@ -121,7 +121,7 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @description
         #' Modify the step components.
         #' @param ... <[`dynamic-dots`][rlang::dyn-dots]>, A named value paris
-        #' indicates the components to replace in the `step`. `NULL` will be
+        #'   indicates the components to replace in the `step`. `NULL` will be
         #'   kept, use [`zap()`] to remove a component from the step.
         modify_step = function(id, ..., reset = TRUE) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
@@ -129,7 +129,7 @@ Pipeline <- R6::R6Class("Pipeline",
             private$assert_ids_exist(id)
             step <- private$step_tree[[id]]
             dots <- rlang::dots_list(..., .homonyms = "error")
-            step <- new_step(modify_list(unclass(step), dots))
+            step <- rlang::inject(new_step(!!!modify_list(unclass(step), dots)))
             private$step_tree[[id]] <- step
             if (isTRUE(reset)) {
                 private$reset_step_internal(id = id, downstream = TRUE)

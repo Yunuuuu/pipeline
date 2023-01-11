@@ -18,11 +18,12 @@ test_that("step_tree works", {
 
 
     step_tree1[["g"]] <- step("g", 2)
-    step_tree1[["g"]] <- list(step("g", 2))
+    expect_error(step_tree1[["g"]] <- list(step("g", 2)))
     expect_s3_class(step_tree1, "step_tree")
     expect_identical(names(step_tree1), letters[1:7])
 
     step_tree1["h"] <- list(step("h", 2))
+    expect_error(suppressWarnings(step_tree1["i"] <- step("i", 2)))
     expect_s3_class(step_tree1, "step_tree")
     expect_identical(names(step_tree1), letters[1:8])
 
@@ -30,6 +31,8 @@ test_that("step_tree works", {
     expect_s3_class(step_tree1, "step_tree")
     expect_identical(names(step_tree1), letters[c(1:8, 10)])
 
-    expect_error(suppressWarnings(step_tree1["i"] <- step("i", 2)))
+    step_tree1$j <- NULL
+    expect_s3_class(step_tree1, "step_tree")
+    expect_identical(names(step_tree1), letters[1:8])
 
 })

@@ -112,7 +112,7 @@ validate_marker_set <- function(x) {
         is_right <- all(has_names(x)) &&
             all(vapply(x, validate_marker_set, logical(1L)))
     } else if (!is.null(x)) {
-        cli::cli_abort("all elements must be {.val NULL}, or a {.cls list} or a {.cls chracter}")
+        cli::cli_abort("all elements must be {.code NULL}, or a {.cls list} or a {.cls chracter}")
     }
     if (!is_right) {
         cli::cli_abort("all elements or sub-elements should be named")

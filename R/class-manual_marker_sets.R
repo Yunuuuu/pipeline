@@ -110,7 +110,7 @@ validate_marker_set <- function(x) {
         # for a list, we should check all elements have names,
         # and then recall this function to check every elments
         is_right <- all(has_names(x)) &&
-            all(vapply(x, validate_marker_set, logical(1L)), USE.NAMES = FALSE)
+            all(vapply(x, validate_marker_set, logical(1L), USE.NAMES = FALSE))
     } else if (!is.null(x)) {
         cli::cli_abort("all elements must be {.code NULL}, or a {.cls list} or a {.cls chracter}")
     }

@@ -102,23 +102,26 @@ rename <- function(x, replace) {
 }
 
 # `NULL` passed to ... will also be kept
-modify_list <- function(x, ..., restrict = NULL) {
-    dots_list <- rlang::list2(...)
-    dots_has_names <- has_names(dots_list)
-    if (!all(dots_has_names)) {
+#' @param x A list to modify
+#' @param replace A list used to replace (or add) value in the `x`
+#' @param restrict Only modify the giving items
+#' @noRd 
+modify_list <- function(x, replace, restrict = NULL) {
+    replace_has_names <- has_names(replace)
+    if (!all(replace_has_names)) {
         cli::cli_warn(c(
-            "All items should be named, will only use the named items.",
-            "!" = "A total of {.val {sum(!dots_has_names)}} item{?s} will be omitted"
+            "All items should be named, Only use the named items.",
+            "!" = "A total of {.val {sum(!replace_has_names)}} item{?s} will be omitted"
         ))
-        dots_list <- dots_list[dots_has_names]
+        replace <- replace[replace_has_names]
     }
     if (is.null(restrict)) {
-        restrict <- names(dots_list)
+        restrict <- names(replace)
     } else {
-        restrict <- intersect(restrict, names(dots_list))
+        restrict <- intersect(restrict, names(replace))
     }
-    for (name in names(dots_list)) {
-        value <- dots_list[[name]]
+    for (name in restrict) {
+        value <- replace[[name]]
         if (rlang::is_zap(value)) {
             x[[name]] <- NULL
         } else {

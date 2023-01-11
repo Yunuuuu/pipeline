@@ -14,10 +14,9 @@ environment.
 \item \href{#method-Pipeline-new}{\code{Pipeline$new()}}
 \item \href{#method-Pipeline-set_step_tree}{\code{Pipeline$set_step_tree()}}
 \item \href{#method-Pipeline-get_step}{\code{Pipeline$get_step()}}
-\item \href{#method-Pipeline-set_step}{\code{Pipeline$set_step()}}
-\item \href{#method-Pipeline-set_steps}{\code{Pipeline$set_steps()}}
 \item \href{#method-Pipeline-add_step}{\code{Pipeline$add_step()}}
 \item \href{#method-Pipeline-add_steps}{\code{Pipeline$add_steps()}}
+\item \href{#method-Pipeline-remove_steps}{\code{Pipeline$remove_steps()}}
 \item \href{#method-Pipeline-reset_step}{\code{Pipeline$reset_step()}}
 \item \href{#method-Pipeline-finish_step}{\code{Pipeline$finish_step()}}
 \item \href{#method-Pipeline-modify_step}{\code{Pipeline$modify_step()}}
@@ -94,47 +93,6 @@ Get the step in the \code{Pipeline} step_tree.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Pipeline-set_step"></a>}}
-\if{latex}{\out{\hypertarget{method-Pipeline-set_step}{}}}
-\subsection{Method \code{set_step()}}{
-Change the step in the \code{Pipeline} step_tree.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$set_step(step, reset = TRUE)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{step}}{A \link{step} object.}
-
-\item{\code{reset}}{A scalar logical value indicates if labelling all downstream
-steps as unfinished.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Pipeline-set_steps"></a>}}
-\if{latex}{\out{\hypertarget{method-Pipeline-set_steps}{}}}
-\subsection{Method \code{set_steps()}}{
-Change the steps in the \code{Pipeline} step_tree.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$set_steps(..., reset = TRUE)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, all items must be a \code{step}
-object.}
-
-\item{\code{reset}}{A scalar logical value indicates if labelling all downstream
-steps as unfinished.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Pipeline-add_step"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-add_step}{}}}
 \subsection{Method \code{add_step()}}{
@@ -168,6 +126,26 @@ Add new steps in the \code{Pipeline} step_tree.
 \describe{
 \item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, all items must be a \code{step}
 object.}
+
+\item{\code{reset}}{A scalar logical value indicates if labelling all downstream
+steps as unfinished.}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Pipeline-remove_steps"></a>}}
+\if{latex}{\out{\hypertarget{method-Pipeline-remove_steps}{}}}
+\subsection{Method \code{remove_steps()}}{
+Remove steps in the \code{Pipeline} step_tree.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$remove_steps(ids, reset = TRUE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{ids}}{Atomic character, the step to remove from the \code{Pipeline}.}
 
 \item{\code{reset}}{A scalar logical value indicates if labelling all downstream
 steps as unfinished.}

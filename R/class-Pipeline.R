@@ -34,59 +34,62 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @description
         #' Get the step in the `Pipeline` step_tree.
         get_step = function(id) {
-            assert_scalar_chr(id)
+            assert_class(id, is.character, class = "character", null_ok = FALSE)
+            assert_length(id, 1L, null_ok = FALSE)
             private$assert_id_exist(id)
             private$step_tree[[id]]
-        },
-        #' @description
-        #' Change the step in the `Pipeline` step_tree.
-        set_step = function(step, reset = TRUE) {
-            private$step_tree[[step$id]] <- step
-            if (isTRUE(reset)) {
-                private$reset_step_internal(id = id, downstream = TRUE)
-            }
-            invisible(self)
-        },
-        #' @description
-        #' Change the steps in the `Pipeline` step_tree.
-        set_steps = function(..., reset = TRUE) {
-            rlang::check_dots_unnamed()
-            dots_list <- rlang::dots_list(...)
-            for (i in seq_along(dots_list)) {
-                self$set_step(dots_list[[i]], reset = reset)
-            }
-            invisible(self)
         },
         #' @description
         #' Add a new step in the `Pipeline` step_tree.
         add_step = function(step, reset = TRUE) {
             id <- step$id
             if (id %in% names(private$step_tree)) {
-                cli::cli_abort(c(
-                    "Already existed {.field step}: {.val {id}}",
-                    "i" = "use {.fn set_step} method if you want to override it." # nolint
-                ))
+                cli::cli_warn(
+                    "!" = "Override the existed {.field step}: {.val {id}}"
+                )
             }
-            self$set_step(step = step, reset = reset)
+            private$step_tree[[id]] <- step
+            if (isTRUE(reset)) {
+                private$reset_step_internal(id = id, downstream = TRUE)
+            }
             invisible(self)
         },
         #' @description
         #' Add new steps in the `Pipeline` step_tree.
         add_steps = function(..., reset = TRUE) {
-            rlang::check_dots_unnamed()
             dots_list <- rlang::dots_list(...)
             for (i in seq_along(dots_list)) {
                 self$add_step(dots_list[[i]], reset = reset)
             }
             invisible(self)
         },
+
+        #' @description
+        #' Remove steps in the `Pipeline` step_tree.
+        #' @param ids Atomic character, the step to remove from the `Pipeline`.
+        remove_steps = function(ids, reset = TRUE) {
+            assert_class(ids, is.character,
+                class = "character",
+                null_ok = FALSE
+            )
+            private$assert_id_exist(ids)
+            for (id in ids) {
+                if (isTRUE(reset)) {
+                    private$reset_step_internal(id = id, downstream = TRUE)
+                }
+                private$step_tree[[id]] <- NULL
+            }
+            invisible(self)
+        },
+
         #' @description
         #' Label the step as unfinished. If downstream is `TRUE`, will also
         #' label all steps depending on this step as unfinished.
         #' @param downstream A logical value indicates whether resetting
         #'   downstream steps.
         reset_step = function(id, downstream = TRUE) {
-            assert_scalar_chr(id)
+            assert_class(id, is.character, class = "character", null_ok = FALSE)
+            assert_length(id, 1L, null_ok = FALSE)
             private$assert_id_exist(id)
             private$reset_step_internal(id = id, downstream = downstream)
             invisible(self)
@@ -94,7 +97,8 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @description
         #' Label the step as finished.
         finish_step = function(id) {
-            assert_scalar_chr(id)
+            assert_class(id, is.character, class = "character", null_ok = FALSE)
+            assert_length(id, 1L, null_ok = FALSE)
             private$assert_id_exist(id)
             private$finish_step_internal(id)
             invisible(self)
@@ -106,7 +110,8 @@ Pipeline <- R6::R6Class("Pipeline",
         #'   `NULL` will be kept in the step object, use [`zap()`] to remove a
         #'   component in the step.
         modify_step = function(id, ..., reset = TRUE) {
-            assert_scalar_chr(id)
+            assert_class(id, is.character, class = "character", null_ok = FALSE)
+            assert_length(id, 1L, null_ok = FALSE)
             private$assert_id_exist(id)
             step <- private$step_tree[[id]]
             step <- new_step(modify_list(unclass(step), ...))
@@ -123,7 +128,8 @@ Pipeline <- R6::R6Class("Pipeline",
         #'   expressions (constants, names or calls) used to modify the call.
         #'   Use [`zap()`] to remove arguments. Empty arguments are preserved.
         modify_call = function(id, ..., reset = TRUE) {
-            assert_scalar_chr(id)
+            assert_class(id, is.character, class = "character", null_ok = FALSE)
+            assert_length(id, 1L, null_ok = FALSE)
             private$assert_id_exist(id)
             step <- private$step_tree[[id]]
             dots_list <- rlang::dots_list(...)
@@ -168,7 +174,8 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @param envir The environment in which to evaluate the `call` in the
         #'   step.
         run_step = function(id, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
-            assert_scalar_chr(id)
+            assert_class(id, is.character, class = "character", null_ok = FALSE)
+            assert_length(id, 1L, null_ok = FALSE)
             private$assert_id_exist(id)
             private$run_step_internal(
                 id = id, refresh = refresh,

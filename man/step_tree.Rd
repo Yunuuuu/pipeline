@@ -27,7 +27,8 @@ step_tree(...)
 \arguments{
 \item{...}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be \code{step}
 object, names in ... don't make sense since we always use the step id as
-the names. steps must be unique with no duplicated ids.}
+the names. steps must be unique with no duplicated ids. Can also provide as
+a list of steps directly.}
 
 \item{x}{A \code{step_tree} object from which to extract element(s) or in which to
 replace element(s).}

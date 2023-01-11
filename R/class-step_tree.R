@@ -4,32 +4,26 @@
 #' the step ids.
 #' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> all items must be `step`
 #'   object, names in ... don't make sense since we always use the step id as
-#'   the names. steps must be unique with no duplicated ids.
+#'   the names. steps must be unique with no duplicated ids. Can also provide as
+#'   a list of steps directly.
 #' @return A `step_tree` object.
 #' @name step_tree
 #' @export
 step_tree <- function(...) {
-    validate_step_tree(new_step_tree(...))
+    dots <- rlang::dots_list(..., .named = NULL)
+    if (identical(length(dots), 1L) && !is_step(dots[[1L]]) && is.list(dots[[1L]])) {
+        dots <- dots[[1L]]
+    }
+    new_step_tree(dots)
 }
 
 #' low-level constructor
 #' @noRd
-new_step_tree <- function(...) {
-    step_list <- unname(rlang::dots_list(..., .named = NULL))
+new_step_tree <- function(step_list) {
     if (!all(vapply(step_list, is_step, logical(1L), USE.NAMES = FALSE))) {
-        cli::cli_abort("all items must be {.cls step} object")
+        cli::cli_abort("all elements must be {.cls step} object")
     }
-    structure(
-        step_list,
-        names = vapply(step_list, "[[", character(1L), "id"),
-        class = c("step_tree", "Pipeline")
-    )
-}
-
-#' validator
-#' @noRd
-validate_step_tree <- function(step_tree) {
-    ids <- names(step_tree)
+    ids <- vapply(step_list, "[[", character(1L), "id", USE.NAMES = FALSE)
     dup_ids <- unique(ids[duplicated(ids)])
     if (length(dup_ids)) {
         cli::cli_abort(c(
@@ -37,7 +31,10 @@ validate_step_tree <- function(step_tree) {
             x = "duplicated ids: {dup_ids]"
         ))
     }
-    step_tree
+    structure(step_list,
+        names = ids,
+        class = c("step_tree", "Pipeline")
+    )
 }
 
 #' @param x A `step_tree` object from which to extract element(s) or in which to
@@ -54,7 +51,7 @@ validate_step_tree <- function(step_tree) {
 #' @export
 #' @rdname step_tree
 `[[<-.step_tree` <- function(x, id, value) {
-    step_tree(!!!NextMethod())
+    new_step_tree(NextMethod())
 }
 
 #' @export
@@ -69,13 +66,13 @@ validate_step_tree <- function(step_tree) {
 #' @export
 #' @rdname step_tree
 `[.step_tree` <- function(x, id) {
-    step_tree(!!!NextMethod())
+    new_step_tree(NextMethod())
 }
 
 #' @export
 #' @rdname step_tree
 `[<-.step_tree` <- function(x, id, value) {
-    step_tree(!!!NextMethod())
+    new_step_tree(NextMethod())
 }
 
 #' Reports whether x is a `step_tree` object

@@ -83,8 +83,8 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
     }
 
     # assert ...
-    dots_list <- rlang::dots_list(..., .homonyms = "error")
-    if (!all(has_names(dots_list))) {
+    dots <- rlang::dots_list(..., .homonyms = "error")
+    if (!all(has_names(dots))) {
         cli::cli_abort("all items in {.arg ...} must be named")
     }
     structure(
@@ -92,7 +92,7 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
             id = id, call = call, deps = deps,
             finished = finished, return = return,
             seed = seed,
-            !!!dots_list
+            !!!dots
         ),
         class = c("step", "Pipeline")
     )

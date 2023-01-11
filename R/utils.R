@@ -17,30 +17,49 @@ rlang::zap
 #' Report if an argument is a specific class
 #' @keywords internal
 #' @noRd
-assert_class <- function(x, is_fn, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
-    if (!is_fn(x)) {
-        cli::cli_abort(
-            c(
-                "{.arg {arg}} must be a {.cls {class}} object",
-                "x" = "You've supplied a {.cls {class(x)}}."
-            ),
-            call = call
-        )
+assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
+    message <- "{.cls {class}} object"
+    if (null_ok) {
+        message <- paste(message, "or {.code NULL}", sep = " ")
+    }
+    message <- sprintf("{.arg {arg}} must be a %s", message)
+    if (is.null(x)) {
+        if (!null_ok) {
+            cli::cli_abort(c(message,
+                "x" = "You've supplied a {.code NULL}"
+            ), call = call)
+        }
+    } else if (!is_class(x)) {
+        cli::cli_abort(c(message,
+            "x" = "You've supplied a {.cls {class(x)}} object"
+        ), call = call)
     }
 }
 
-#' Report if an argument is a scalar character
+#' Report if an argument has specific length
 #' @keywords internal
 #' @noRd
-assert_scalar_chr <- function(x, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
-    if (!rlang::is_scalar_character(x)) {
-        cli::cli_abort(
-            c(
-                "{.arg {arg}} must be a scalar {.cls character}",
-                "x" = "You've supplied a length {.val {length(x)}} {.cls {class(x)}}."
-            ),
-            call = call
-        )
+assert_length <- function(x, length, null_ok = FALSE, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
+    length <- as.integer(length)
+    if (identical(length, 1L)) {
+        message <- "{.field scalar} object"
+    } else {
+        message <- "length {.val {length}} object"
+    }
+    if (null_ok) {
+        message <- paste(message, "or {.code NULL}", sep = " ")
+    }
+    message <- sprintf("{.arg {arg}} must be a %s", message)
+    if (is.null(x)) {
+        if (!null_ok) {
+            cli::cli_abort(c(message,
+                "x" = "You've supplied a {.code NULL}"
+            ), call = call)
+        }
+    } else if (!identical(length(x), length)) {
+        cli::cli_abort(c(message,
+            "x" = "You've supplied a length {.val {length(x)}} object"
+        ), call = call)
     }
 }
 
@@ -88,8 +107,7 @@ modify_list <- function(x, ..., restrict = NULL) {
     dots_has_names <- has_names(dots_list)
     if (!all(dots_has_names)) {
         cli::cli_warn(c(
-            "All items should be named",
-            "!" = "Only use named items.",
+            "All items should be named, will only use the named items.",
             "!" = "A total of {.val {sum(!dots_has_names)}} item{?s} will be omitted"
         ))
         dots_list <- dots_list[dots_has_names]
@@ -123,15 +141,15 @@ call_standardise <- function(call, env = rlang::caller_env()) {
     }
 }
 
-find_expr_deps <- function(expr) {
-    # substitute "~" with "base::identity"
-    expr <- rlang::call2(rlang::expr(substitute), expr,
-        env = rlang::expr(list(`~` = base::identity)),
-        .ns = "base"
-    )
-    expr <- rlang::eval_bare(expr, env = rlang::base_env())
-    codetools::findGlobals(rlang::new_function(args = NULL, body = expr))
-}
+# find_expr_deps <- function(expr) {
+#     # substitute "~" with "base::identity"
+#     expr <- rlang::call2(rlang::expr(substitute), expr,
+#         env = rlang::expr(list(`~` = base::identity)),
+#         .ns = "base"
+#     )
+#     expr <- rlang::eval_bare(expr, env = rlang::base_env())
+#     codetools::findGlobals(rlang::new_function(args = NULL, body = expr))
+# }
 
 change_expr <- function(expr, from, to) {
     switch(expr_type(expr),

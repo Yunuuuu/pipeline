@@ -71,7 +71,7 @@ Set the step tree in the \code{Pipeline} object
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, all items must be a \code{step}
-object.}
+object. Can also provide as a list of steps directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -126,7 +126,7 @@ Add new steps in the \code{Pipeline} step_tree.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, all items must be a \code{step}
-object.}
+object. Can also provide as a list of steps directly.}
 
 \item{\code{reset}}{A scalar logical value indicates if labelling all downstream
 steps as unfinished.}
@@ -216,10 +216,9 @@ Modify the step components.
 \describe{
 \item{\code{id}}{A scalar character of the step name.}
 
-\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, A named list with
-components to replace corresponding components in the \code{step}.
-\code{NULL} will be kept, use \code{\link[=zap]{zap()}} to remove a component in the
-step.}
+\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, A named value paris
+indicates the components to replace in the \code{step}. \code{NULL} will be
+kept, use \code{\link[=zap]{zap()}} to remove a component from the step.}
 
 \item{\code{reset}}{A scalar logical value indicates if labelling all downstream
 steps as unfinished.}

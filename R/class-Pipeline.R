@@ -8,7 +8,7 @@
 #' @param reset A scalar logical value indicates if labelling all downstream
 #' steps as unfinished.
 #' @param ... <[`dynamic-dots`][rlang::dyn-dots]>, all items must be a `step`
-#' object.
+#' object. Can also provide as a list of steps directly.
 Pipeline <- R6::R6Class("Pipeline",
     public = list(
         #' @description
@@ -58,9 +58,12 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @description
         #' Add new steps in the `Pipeline` step_tree.
         add_steps = function(..., reset = TRUE) {
-            dots_list <- rlang::dots_list(...)
-            for (i in seq_along(dots_list)) {
-                self$add_step(dots_list[[i]], reset = reset)
+            dots <- rlang::dots_list(..., .named = NULL)
+            if (identical(length(dots), 1L) && !is_step(dots[[1L]]) && is.list(dots[[1L]])) {
+                dots <- dots[[1L]]
+            }
+            for (i in seq_along(dots)) {
+                self$add_step(dots[[i]], reset = reset)
             }
             invisible(self)
         },
@@ -117,16 +120,16 @@ Pipeline <- R6::R6Class("Pipeline",
         },
         #' @description
         #' Modify the step components.
-        #' @param ... <[`dynamic-dots`][rlang::dyn-dots]>, A named list with
-        #'   components to replace corresponding components in the `step`.
-        #'   `NULL` will be kept, use [`zap()`] to remove a component in the
-        #'   step.
+        #' @param ... <[`dynamic-dots`][rlang::dyn-dots]>, A named value paris
+        #' indicates the components to replace in the `step`. `NULL` will be
+        #'   kept, use [`zap()`] to remove a component from the step.
         modify_step = function(id, ..., reset = TRUE) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
             private$assert_ids_exist(id)
             step <- private$step_tree[[id]]
-            step <- new_step(modify_list(unclass(step), ...))
+            dots <- rlang::dots_list(..., .homonyms = "error")
+            step <- new_step(modify_list(unclass(step), dots))
             private$step_tree[[id]] <- step
             if (isTRUE(reset)) {
                 private$reset_step_internal(id = id, downstream = TRUE)
@@ -144,15 +147,15 @@ Pipeline <- R6::R6Class("Pipeline",
             assert_length(id, 1L, null_ok = FALSE)
             private$assert_ids_exist(id)
             step <- private$step_tree[[id]]
-            dots_list <- rlang::dots_list(...)
-            if (length(dots_list)) {
+            dots <- rlang::dots_list(...)
+            if (length(dots)) {
                 step$call <- rlang::set_expr(
                     step$call,
                     call_standardise(step$call)
                 )
                 step$call <- rlang::set_expr(
                     step$call,
-                    rlang::call_modify(step$call, !!!dots_list)
+                    rlang::call_modify(step$call, !!!dots)
                 )
                 private$step_tree[[id]] <- step
                 if (isTRUE(reset)) {
@@ -399,14 +402,15 @@ Pipeline <- R6::R6Class("Pipeline",
         ### build step dependencies network as an graph object
         build_step_graph = function(to = NULL, from = NULL, add_attrs = FALSE) {
             step_list <- unclass(private$step_tree)
-            if (is.null(step_list)) return(NULL)
+            if (is.null(step_list)) {
+                return(NULL)
+            }
             step_graph <- build_step_graph_helper(
                 step_list,
                 add_attrs = add_attrs
             )
             sub_step_graph(step_graph, to = to, from = from)
         }
-
     )
 )
 
@@ -430,7 +434,7 @@ Pipeline <- R6::R6Class("Pipeline",
             x$add_step(y, reset = TRUE)
         } else {
             cli::cli_abort(
-                "Can't add {.var {yname}} to a {.cls Pipeline} object."
+                "Can't add {.var {yname}} to a {.cls Pipeline} R6 object."
             )
         }
     } else if (is_step(x) || is_step_tree(x)) {
@@ -441,4 +445,3 @@ Pipeline <- R6::R6Class("Pipeline",
     }
     x
 }
-

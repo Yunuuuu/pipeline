@@ -18,6 +18,7 @@ environment.
 \item \href{#method-Pipeline-add_steps}{\code{Pipeline$add_steps()}}
 \item \href{#method-Pipeline-remove_steps}{\code{Pipeline$remove_steps()}}
 \item \href{#method-Pipeline-reset_step}{\code{Pipeline$reset_step()}}
+\item \href{#method-Pipeline-reset_step_tree}{\code{Pipeline$reset_step_tree()}}
 \item \href{#method-Pipeline-finish_step}{\code{Pipeline$finish_step()}}
 \item \href{#method-Pipeline-modify_step}{\code{Pipeline$modify_step()}}
 \item \href{#method-Pipeline-modify_call}{\code{Pipeline$modify_call()}}
@@ -175,6 +176,16 @@ downstream steps.}
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Pipeline-reset_step_tree"></a>}}
+\if{latex}{\out{\hypertarget{method-Pipeline-reset_step_tree}{}}}
+\subsection{Method \code{reset_step_tree()}}{
+Label all steps in the step_tree as unfinished.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$reset_step_tree()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Pipeline-finish_step"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-finish_step}{}}}
 \subsection{Method \code{finish_step()}}{
@@ -195,7 +206,7 @@ Label the step as finished.
 \if{html}{\out{<a id="method-Pipeline-modify_step"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-modify_step}{}}}
 \subsection{Method \code{modify_step()}}{
-Modify the step.
+Modify the step components.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$modify_step(id, ..., reset = TRUE)}\if{html}{\out{</div>}}
 }
@@ -207,8 +218,8 @@ Modify the step.
 
 \item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, A named list with
 components to replace corresponding components in the \code{step}.
-\code{NULL} will be kept in the step object, use \code{\link[=zap]{zap()}} to remove a
-component in the step.}
+\code{NULL} will be kept, use \code{\link[=zap]{zap()}} to remove a component in the
+step.}
 
 \item{\code{reset}}{A scalar logical value indicates if labelling all downstream
 steps as unfinished.}
@@ -220,7 +231,7 @@ steps as unfinished.}
 \if{html}{\out{<a id="method-Pipeline-modify_call"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-modify_call}{}}}
 \subsection{Method \code{modify_call()}}{
-Modify the step call components.
+Modify the step call arguments.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$modify_call(id, ..., reset = TRUE)}\if{html}{\out{</div>}}
 }

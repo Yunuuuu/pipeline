@@ -31,12 +31,13 @@ Pipeline <- R6::R6Class("Pipeline",
             private$step_tree <- step_tree(...)
             invisible(self)
         },
+
         #' @description
         #' Get the step in the `Pipeline` step_tree.
         get_step = function(id) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
-            private$assert_id_exist(id)
+            private$assert_ids_exist(id)
             private$step_tree[[id]]
         },
         #' @description
@@ -72,7 +73,7 @@ Pipeline <- R6::R6Class("Pipeline",
                 class = "character",
                 null_ok = FALSE
             )
-            private$assert_id_exist(ids)
+            private$assert_ids_exist(ids)
             for (id in ids) {
                 if (isTRUE(reset)) {
                     private$reset_step_internal(id = id, downstream = TRUE)
@@ -90,29 +91,40 @@ Pipeline <- R6::R6Class("Pipeline",
         reset_step = function(id, downstream = TRUE) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
-            private$assert_id_exist(id)
+            private$assert_ids_exist(id)
             private$reset_step_internal(id = id, downstream = downstream)
             invisible(self)
         },
+
+        #' @description
+        #' Label all steps in the step_tree as unfinished.
+        reset_step_tree = function() {
+            ids <- names(private$step_tree)
+            for (id in ids) {
+                private$reset_step_internal(id = id, downstream = FALSE)
+            }
+            invisible(self)
+        },
+
         #' @description
         #' Label the step as finished.
         finish_step = function(id) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
-            private$assert_id_exist(id)
+            private$assert_ids_exist(id)
             private$finish_step_internal(id)
             invisible(self)
         },
         #' @description
-        #' Modify the step.
+        #' Modify the step components.
         #' @param ... <[`dynamic-dots`][rlang::dyn-dots]>, A named list with
         #'   components to replace corresponding components in the `step`.
-        #'   `NULL` will be kept in the step object, use [`zap()`] to remove a
-        #'   component in the step.
+        #'   `NULL` will be kept, use [`zap()`] to remove a component in the
+        #'   step.
         modify_step = function(id, ..., reset = TRUE) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
-            private$assert_id_exist(id)
+            private$assert_ids_exist(id)
             step <- private$step_tree[[id]]
             step <- new_step(modify_list(unclass(step), ...))
             private$step_tree[[id]] <- step
@@ -123,14 +135,14 @@ Pipeline <- R6::R6Class("Pipeline",
         },
 
         #' @description
-        #' Modify the step call components.
+        #' Modify the step call arguments.
         #' @param ... <[`dynamic-dots`][rlang::dyn-dots]>, Named or unnamed
         #'   expressions (constants, names or calls) used to modify the call.
         #'   Use [`zap()`] to remove arguments. Empty arguments are preserved.
         modify_call = function(id, ..., reset = TRUE) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
-            private$assert_id_exist(id)
+            private$assert_ids_exist(id)
             step <- private$step_tree[[id]]
             dots_list <- rlang::dots_list(...)
             if (length(dots_list)) {
@@ -176,7 +188,7 @@ Pipeline <- R6::R6Class("Pipeline",
         run_step = function(id, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
-            private$assert_id_exist(id)
+            private$assert_ids_exist(id)
             private$run_step_internal(
                 id = id, refresh = refresh,
                 reset = reset,
@@ -192,8 +204,6 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @param envir The environment in which to evaluate the `call` in the
         #'   step.
         run_targets = function(targets = NULL, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
-            step_list <- unclass(private$step_tree)
-
             # build dependencies graph
             step_graph <- private$build_step_graph(add_attrs = TRUE)
             attrs <- igraph::vertex_attr(step_graph)[c("name", "levels")]
@@ -201,6 +211,7 @@ Pipeline <- R6::R6Class("Pipeline",
 
             # targets are the steps we want to run until if NULL, all steps
             # without child steps will be used
+            step_list <- unclass(private$step_tree)
             targets <- rlang::enquo(targets)
             if (is.null(rlang::get_expr(targets))) {
                 targets <- names(igraph::V(step_graph))[
@@ -230,7 +241,13 @@ Pipeline <- R6::R6Class("Pipeline",
                 )
 
                 # check if all dependencies exist in step_tree
-                private$check_step_deps(target_deps)
+                missing_ids <- setdiff(target_deps, names(private$step_tree))
+                if (length(missing_ids)) {
+                    cli::cli_abort(c(
+                        "Can't find all {.field steps} in the {.var step_tree}",
+                        x = "Missing {.val {length(missing_ids)}} id{?s}: {.val {missing_ids}}"
+                    ))
+                }
 
                 # since levels is integer, we simply factor it so split can sort
                 # the list in the order of the levels
@@ -314,19 +331,13 @@ Pipeline <- R6::R6Class("Pipeline",
         step_tree = NULL, envir = NULL,
 
         ## For the usage of asserting the public method arguments
-        is_id_exist = function(id) {
-            id %in% names(private$step_tree)
-        },
-        assert_id_exist = function(id, arg = rlang::caller_arg(id), call = rlang::caller_env()) {
-            missing_id <- setdiff(id, names(private$step_tree))
+        assert_ids_exist = function(ids, arg = rlang::caller_arg(ids), call = rlang::caller_env()) {
+            missing_ids <- setdiff(ids, names(private$step_tree))
             if (length(missing_id)) {
-                cli::cli_abort(
-                    c(
-                        "{.arg {arg}} must exist in the {.var step_tree}",
-                        x = "Missing ids: {.val {missing_id}}"
-                    ),
-                    call = call
-                )
+                cli::cli_abort(c(
+                    "Provided {.arg {arg}} must exist in the {.var step_tree}",
+                    x = "Missing ids: {.val {missing_ids}}"
+                ), call = call)
             }
         },
 
@@ -347,7 +358,7 @@ Pipeline <- R6::R6Class("Pipeline",
                 reset_ids <- id
             }
             for (reset_id in reset_ids) {
-                if (private$is_id_exist(reset_id)) {
+                if (reset_id %in% names(private$step_tree)) {
                     private$step_tree[[reset_id]]$finished <- FALSE
                 }
             }
@@ -385,52 +396,49 @@ Pipeline <- R6::R6Class("Pipeline",
             result
         },
 
-        # abort if any dependency is non-exist in step_tree
-        check_step_deps = function(deps = NULL) {
-            if (is.null(deps)) {
-                deps <- extract_step_deps(unclass(private$step_tree))
-                deps <- unlist(deps, recursive = FALSE, use.names = FALSE)
-            }
-            missing_deps <- setdiff(deps, names(private$step_tree))
-            if (length(missing_deps)) {
-                cli::cli_abort(c(
-                    "Can't find all dependencies in the {.var step_tree}",
-                    x = "Missing {.val {length(missing_deps)}} dependenc{?y/ies}: {.val {missing_deps}}"
-                ))
-            }
-        },
-
-        # build step dependencies network as an graph object
+        ### build step dependencies network as an graph object
         build_step_graph = function(to = NULL, from = NULL, add_attrs = FALSE) {
             step_list <- unclass(private$step_tree)
-            if (is.null(step_list)) {
-                return(NULL)
-            }
+            if (is.null(step_list)) return(NULL)
             step_graph <- build_step_graph_helper(
                 step_list,
                 add_attrs = add_attrs
             )
-
-            if (is.null(to) && is.null(from)) {
-                return(step_graph)
-            } else {
-                if (!is.null(from) && !is.null(to)) {
-                    cli::cli_warn(c(
-                        "Both {.arg from} and {.arg to} are setted.",
-                        "!" = "Will only use {.arg to}."
-                    ))
-                }
-                if (!is.null(to)) {
-                    graph_ids <- igraph::subcomponent(step_graph,
-                        v = to, mode = "in"
-                    )
-                } else if (!is.null(from)) {
-                    graph_ids <- igraph::subcomponent(step_graph,
-                        v = from, mode = "out"
-                    )
-                }
-                return(igraph::subgraph(step_graph, vids = graph_ids))
-            }
+            sub_step_graph(step_graph, to = to, from = from)
         }
+
     )
 )
+
+`+.Pipeline` <- function(x, y) {
+    if (missing(y)) {
+        cli::cli_abort(c(
+            "Cannot use {.code +} with a single argument",
+            "i" = "Did you accidentally put {.code +} on a new line?"
+        ))
+    }
+    # Get the name of what was passed in as y, and pass along so that it
+    # can be displayed in error messages
+    yname <- deparse(substitute(y)) # nolint
+
+    if (inherits(x, "Pipeline") && R6::is.R6(x)) {
+        if (is.list(y)) {
+            x$add_steps(!!!y, reset = TRUE)
+        } else if (is_step_tree(y)) {
+            x$add_steps(!!!unclass(y), reset = TRUE)
+        } else if (is_step(y)) {
+            x$add_step(y, reset = TRUE)
+        } else {
+            cli::cli_abort(
+                "Can't add {.var {yname}} to a {.cls Pipeline} object."
+            )
+        }
+    } else if (is_step(x) || is_step_tree(x)) {
+        cli::cli_abort(c(
+            "Cannot add {.cls step} objects together",
+            "i" = "Did you forget to add this object to a {.cls Pipeline} R6 object?"
+        ))
+    }
+    x
+}
+

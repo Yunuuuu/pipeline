@@ -2,7 +2,45 @@
 % Please edit documentation in R/class-step_tree.R
 \name{step_tree}
 \alias{step_tree}
-\title{step_tree class}
+\alias{[[.step_tree}
+\alias{[[<-.step_tree}
+\alias{$.step_tree}
+\alias{$<-.step_tree}
+\alias{[.step_tree}
+\alias{[<-.step_tree}
+\title{Build a \code{step_tree} class}
+\usage{
+step_tree(...)
+
+\method{[[}{step_tree}(x, id)
+
+\method{[[}{step_tree}(x, id) <- value
+
+\method{$}{step_tree}(x, id)
+
+\method{$}{step_tree}(x, id) <- value
+
+\method{[}{step_tree}(x, id)
+
+\method{[}{step_tree}(x, id) <- value
+}
+\arguments{
+\item{...}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be \code{step}
+object, names in ... don't make sense since we always use the step id as
+the names. steps must be unique with no duplicated ids.}
+
+\item{x}{A \code{step_tree} object from which to extract element(s) or in which to
+replace element(s).}
+
+\item{id}{The id specifying step to extract or replace.}
+
+\item{value}{The value to replace with. Must be a \code{step} object or a list of
+\code{step} object.}
+}
+\value{
+A \code{step_tree} object.
+}
 \description{
-step_tree class
+A \code{step_tree} is a list of steps, the element names are always the same with
+the step ids.
 }

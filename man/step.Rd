@@ -68,8 +68,7 @@ replace element(s).}
 
 \item{i}{The indices specifying elements to extract or replace}
 
-\item{value}{The value to replace, \code{NULL} will be kept in the step object.
-use \code{zap()} to remove a component in the step.}
+\item{value}{The value to replace with.}
 }
 \value{
 A \code{step} object.
@@ -77,7 +76,7 @@ A \code{step} object.
 \description{
 A \code{step} object define the command to run in the pipeline.
 \itemize{
-\item step: user-friendly helper
-\item new_step: low-level constructor
+\item step: user-friendly helper, the \code{call} will be defused as a quosure.
+\item new_step: low-level constructor, the \code{call} will used as is.
 }
 }

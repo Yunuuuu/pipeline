@@ -48,6 +48,27 @@ eval_step <- function(step, mask, pipeline = NULL, envir = rlang::caller_env()) 
     rlang::eval_tidy(step$call, data = mask, env = envir)
 }
 
+#' @param other_items User provided arguments to modify the default step items.
+#' @param default The default components for this step.
+#' @noRd 
+build_step <- function(id, call, other_items, default) {
+    step_param <- modify_list(default, other_items)
+    rlang::inject(create_step(
+        id = id, call = call, !!!step_param
+    ))
+}
+
+#' @description 
+#' we use `[rlang::enquo()]` defuse a function argument, then pass the argument
+#' into this function.
+#' @param x A quosure provided as a single symbol.
+#' @return A quosure object if provided argument is not missing, otherwise, a
+#' symbol of the argument name.
+#' @noRd 
+quo_missing_arg <- function(x, label = rlang::ensym(x)) {
+    if (rlang::quo_is_missing(x)) label else x
+}
+
 sub_step_graph <- function(step_graph, to = NULL, from = NULL) {
     if (is.null(to) && is.null(from)) {
         return(step_graph)
@@ -154,10 +175,10 @@ define_step_levels <- function(ids = NULL, step_deps) {
     if (is.null(ids)) {
         ids <- names(step_deps)
     } else {
-        missed_ids <- setdiff(ids, names(step_deps))
-        if (length(missed_ids)) {
+        missing_ids <- setdiff(ids, names(step_deps))
+        if (length(missing_ids)) {
             cli::cli_abort(
-                "Can't find {.field {missed_ids}} in {.var step_tree}"
+                "Can't find {.field {missing_ids}} in {.var step_tree}"
             )
         }
     }

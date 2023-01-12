@@ -5,8 +5,9 @@
 \title{R6 Class Representing Pipeline}
 \description{
 A Pipeline object, which is bound with a step_tree and a
-environment, provides methods to run a the steps in the attached
-environment.
+environment, provides methods to run the steps in the attached environment.
+In this way, we can bind all steps used in a pipeline and their dependant
+evaluation frame in a object.
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -14,6 +15,7 @@ environment.
 \item \href{#method-Pipeline-new}{\code{Pipeline$new()}}
 \item \href{#method-Pipeline-set_step_tree}{\code{Pipeline$set_step_tree()}}
 \item \href{#method-Pipeline-get_step}{\code{Pipeline$get_step()}}
+\item \href{#method-Pipeline-get_steps}{\code{Pipeline$get_steps()}}
 \item \href{#method-Pipeline-add_step}{\code{Pipeline$add_step()}}
 \item \href{#method-Pipeline-add_steps}{\code{Pipeline$add_steps()}}
 \item \href{#method-Pipeline-remove_steps}{\code{Pipeline$remove_steps()}}
@@ -22,6 +24,7 @@ environment.
 \item \href{#method-Pipeline-finish_step}{\code{Pipeline$finish_step()}}
 \item \href{#method-Pipeline-modify_step}{\code{Pipeline$modify_step()}}
 \item \href{#method-Pipeline-modify_call}{\code{Pipeline$modify_call()}}
+\item \href{#method-Pipeline-get_step_graph}{\code{Pipeline$get_step_graph()}}
 \item \href{#method-Pipeline-plot_step_graph}{\code{Pipeline$plot_step_graph()}}
 \item \href{#method-Pipeline-run_step}{\code{Pipeline$run_step()}}
 \item \href{#method-Pipeline-run_targets}{\code{Pipeline$run_targets()}}
@@ -46,11 +49,12 @@ Create a new person object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> \code{step} object used to
-create \code{Pipeline} step tree. Must be unnamed.}
+\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> should be \code{step}
+object used to create \code{Pipeline} step_tree.}
 
-\item{\code{data}}{A data list used to evaluate the variable in the step
-call object.}
+\item{\code{data}}{A data list to build the attached environment which is
+used to evaluate the variable in the step call object. One can also
+use \verb{$env_bind} method to add new variable.}
 }
 \if{html}{\out{</div>}}
 }
@@ -70,8 +74,10 @@ Set the step tree in the \code{Pipeline} object
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, all items must be a \code{step}
-object. Can also provide as a list of steps directly.}
+\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be \code{step}
+object, names in ... don't make sense since we always use the step id as
+the names. steps must be unique with no duplicated ids. Can also provided
+as a list of steps directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -80,7 +86,7 @@ object. Can also provide as a list of steps directly.}
 \if{html}{\out{<a id="method-Pipeline-get_step"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-get_step}{}}}
 \subsection{Method \code{get_step()}}{
-Get the step in the \code{Pipeline} step_tree.
+Get a single step in the \code{Pipeline} step_tree.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$get_step(id)}\if{html}{\out{</div>}}
 }
@@ -91,6 +97,30 @@ Get the step in the \code{Pipeline} step_tree.
 \item{\code{id}}{A scalar character of the step name.}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A step object.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Pipeline-get_steps"></a>}}
+\if{latex}{\out{\hypertarget{method-Pipeline-get_steps}{}}}
+\subsection{Method \code{get_steps()}}{
+Get multiple steps in the \code{Pipeline} step_tree.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$get_steps(ids = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{ids}}{A atomic character of the step name. if \code{NULL}, all steps
+will be extracted.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A step_tree object.
 }
 }
 \if{html}{\out{<hr>}}
@@ -107,8 +137,8 @@ Add a new step in the \code{Pipeline} step_tree.
 \describe{
 \item{\code{step}}{A \link{step} object.}
 
-\item{\code{reset}}{A scalar logical value indicates if labelling all downstream
-steps as unfinished.}
+\item{\code{reset}}{A scalar logical value indicates whether we should label all
+downstream steps as unfinished.}
 }
 \if{html}{\out{</div>}}
 }
@@ -125,11 +155,13 @@ Add new steps in the \code{Pipeline} step_tree.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, all items must be a \code{step}
-object. Can also provide as a list of steps directly.}
+\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be \code{step}
+object, names in ... don't make sense since we always use the step id as
+the names. steps must be unique with no duplicated ids. Can also provided
+as a list of steps directly.}
 
-\item{\code{reset}}{A scalar logical value indicates if labelling all downstream
-steps as unfinished.}
+\item{\code{reset}}{A scalar logical value indicates whether we should label all
+downstream steps as unfinished.}
 }
 \if{html}{\out{</div>}}
 }
@@ -146,10 +178,10 @@ Remove steps in the \code{Pipeline} step_tree.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{ids}}{Atomic character, the step to remove from the \code{Pipeline}.}
+\item{\code{ids}}{Atomic character, the steps to remove from the \code{Pipeline}.}
 
-\item{\code{reset}}{A scalar logical value indicates if labelling all downstream
-steps as unfinished.}
+\item{\code{reset}}{A scalar logical value indicates whether we should label all
+downstream steps as unfinished.}
 }
 \if{html}{\out{</div>}}
 }
@@ -158,8 +190,8 @@ steps as unfinished.}
 \if{html}{\out{<a id="method-Pipeline-reset_step"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-reset_step}{}}}
 \subsection{Method \code{reset_step()}}{
-Label the step as unfinished. If downstream is \code{TRUE}, will also
-label all steps depending on this step as unfinished.
+Label the step as unfinished. If downstream is \code{TRUE},
+will also label all steps depending on this step as unfinished.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$reset_step(id, downstream = TRUE)}\if{html}{\out{</div>}}
 }
@@ -220,8 +252,8 @@ Modify the step components.
 indicates the components to replace in the \code{step}. \code{NULL} will be
 kept, use \code{\link[=zap]{zap()}} to remove a component from the step.}
 
-\item{\code{reset}}{A scalar logical value indicates if labelling all downstream
-steps as unfinished.}
+\item{\code{reset}}{A scalar logical value indicates whether we should label all
+downstream steps as unfinished.}
 }
 \if{html}{\out{</div>}}
 }
@@ -244,10 +276,39 @@ Modify the step call arguments.
 expressions (constants, names or calls) used to modify the call.
 Use \code{\link[=zap]{zap()}} to remove arguments. Empty arguments are preserved.}
 
-\item{\code{reset}}{A scalar logical value indicates if labelling all downstream
-steps as unfinished.}
+\item{\code{reset}}{A scalar logical value indicates whether we should label all
+downstream steps as unfinished.}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Pipeline-get_step_graph"></a>}}
+\if{latex}{\out{\hypertarget{method-Pipeline-get_step_graph}{}}}
+\subsection{Method \code{get_step_graph()}}{
+Build step dependencies network as an graph object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$get_step_graph(to = NULL, from = NULL, add_attrs = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{to}}{The step to start the search to create the step dependencies graph.
+If \code{to} is specified, all steps from which the (to) step is reachable are
+extracted.}
+
+\item{\code{from}}{The step to start the search to create the step dependencies
+graph. If \code{from} is specified, all steps reachable from the (from) step are
+extracted. only used when \code{to} argument is not specified.}
+
+\item{\code{add_attrs}}{If \code{TRUE}, add "is_finished", "is_existed" and
+"levels" as the graph vertex attributes. Default: \code{FALSE}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A igraph object.
 }
 }
 \if{html}{\out{<hr>}}
@@ -267,11 +328,13 @@ Plot the step dependencies tree.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{to, from}}{The step to start the search to create the step
-dependencies graph. If \code{to} is specified, all steps from which step
-(to) is reachable are extracted. If \code{from} is specified, all steps
-reachable from step (from) are extracted. If both are specified,
-only \code{to} is used.}
+\item{\code{to}}{The step to start the search to create the step dependencies graph.
+If \code{to} is specified, all steps from which the (to) step is reachable are
+extracted.}
+
+\item{\code{from}}{The step to start the search to create the step dependencies
+graph. If \code{from} is specified, all steps reachable from the (from) step are
+extracted. only used when \code{to} argument is not specified.}
 
 \item{\code{layout}}{Gives the layout of the graphs.}
 
@@ -302,8 +365,8 @@ Running the step
 \item{\code{refresh}}{A scalar logical value indicates if we should run step
 even it has been finished.}
 
-\item{\code{reset}}{A scalar logical value indicates if labelling all downstream
-steps as unfinished.}
+\item{\code{reset}}{A scalar logical value indicates whether we should label all
+downstream steps as unfinished.}
 
 \item{\code{envir}}{The environment in which to evaluate the \code{call} in the
 step.}
@@ -334,8 +397,8 @@ target steps until which to run.}
 \item{\code{refresh}}{A scalar logical value indicates if we should run step
 even it has been finished.}
 
-\item{\code{reset}}{A scalar logical value indicates if labelling all downstream
-steps as unfinished.}
+\item{\code{reset}}{A scalar logical value indicates whether we should label all
+downstream steps as unfinished.}
 
 \item{\code{envir}}{The environment in which to evaluate the \code{call} in the
 step.}

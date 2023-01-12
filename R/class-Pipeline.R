@@ -1,22 +1,32 @@
 #' R6 Class Representing Pipeline
 #'
 #' @description A Pipeline object, which is bound with a step_tree and a
-#'   environment, provides methods to run a the steps in the attached
-#'   environment.
+#'   environment, provides methods to run the steps in the attached environment.
+#'   In this way, we can bind all steps used in a pipeline and their dependant
+#'   evaluation frame in a object.
 #' @param id A scalar character of the step name.
 #' @param step A [step] object.
-#' @param reset A scalar logical value indicates if labelling all downstream
-#' steps as unfinished.
-#' @param ... <[`dynamic-dots`][rlang::dyn-dots]>, all items must be a `step`
-#' object. Can also provide as a list of steps directly.
+#' @param reset A scalar logical value indicates whether we should label all
+#'   downstream steps as unfinished.
+#' @param ... <[`dynamic-dots`][rlang::dyn-dots]> all items must be `step`
+#'   object, names in ... don't make sense since we always use the step id as
+#'   the names. steps must be unique with no duplicated ids. Can also provided
+#'   as a list of steps directly.
+#' @param to The step to start the search to create the step dependencies graph.
+#'   If `to` is specified, all steps from which the (to) step is reachable are
+#'   extracted.
+#' @param from The step to start the search to create the step dependencies
+#'   graph. If `from` is specified, all steps reachable from the (from) step are
+#'   extracted. only used when `to` argument is `NULL`.
 Pipeline <- R6::R6Class("Pipeline",
     public = list(
         #' @description
         #' Create a new person object.
-        #' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> `step` object used to
-        #' create `Pipeline` step tree. Must be unnamed.
-        #' @param data A data list used to evaluate the variable in the step
-        #' call object.
+        #' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> should be `step`
+        #'   object used to create `Pipeline` step_tree.
+        #' @param data A data list to build the attached environment which is
+        #'   used to evaluate the variable in the step call object. One can also
+        #'   use `$env_bind` method to add new variable.
         #' @return A new `Pipeline` object.
         initialize = function(..., data = list()) {
             private$envir <- rlang::new_environment(data = data)
@@ -32,13 +42,32 @@ Pipeline <- R6::R6Class("Pipeline",
         },
 
         #' @description
-        #' Get the step in the `Pipeline` step_tree.
+        #' Get a single step in the `Pipeline` step_tree.
+        #' @return A step object.
         get_step = function(id) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
             private$assert_ids_exist(id)
             private$step_tree[[id]]
         },
+
+        #' @description
+        #' Get multiple steps in the `Pipeline` step_tree.
+        #' @param ids A atomic character of the step name. if `NULL`, all steps
+        #'   will be extracted.
+        #' @return A step_tree object.
+        get_steps = function(ids = NULL) {
+            assert_class(ids, is.character,
+                class = "character", null_ok = TRUE
+            )
+            if (!is.null(ids)) {
+                private$assert_ids_exist(ids)
+                private$step_tree[ids]
+            } else {
+                private$step_tree
+            }
+        },
+
         #' @description
         #' Add a new step in the `Pipeline` step_tree.
         add_step = function(step, reset = TRUE) {
@@ -69,7 +98,7 @@ Pipeline <- R6::R6Class("Pipeline",
 
         #' @description
         #' Remove steps in the `Pipeline` step_tree.
-        #' @param ids Atomic character, the step to remove from the `Pipeline`.
+        #' @param ids Atomic character, the steps to remove from the `Pipeline`.
         remove_steps = function(ids, reset = TRUE) {
             assert_class(ids, is.character,
                 class = "character",
@@ -85,9 +114,8 @@ Pipeline <- R6::R6Class("Pipeline",
             invisible(self)
         },
 
-        #' @description
-        #' Label the step as unfinished. If downstream is `TRUE`, will also
-        #' label all steps depending on this step as unfinished.
+        #' @description Label the step as unfinished. If downstream is `TRUE`,
+        #'   will also label all steps depending on this step as unfinished.
         #' @param downstream A logical value indicates whether resetting
         #'   downstream steps.
         reset_step = function(id, downstream = TRUE) {
@@ -163,17 +191,40 @@ Pipeline <- R6::R6Class("Pipeline",
             }
             invisible(self)
         },
+
+        #' @description Build step dependencies network as an graph object
+        #' @param add_attrs If `TRUE`, add "is_finished", "is_existed" and
+        #'   "levels" as the graph vertex attributes. Default: `FALSE`
+        #' @return A igraph object.
+        get_step_graph = function(to = NULL, from = NULL, add_attrs = FALSE) {
+            # assert to argument
+            assert_class(to, is.character, class = "character", null_ok = TRUE)
+            assert_length(to, 1L, null_ok = TRUE)
+            if (!is.null(to)) {
+                private$assert_ids_exist(id)
+            }
+
+            # assert from argument
+            assert_class(from, is.character,
+                class = "character", null_ok = TRUE
+            )
+            assert_length(from, 1L, null_ok = TRUE)
+            if (!is.null(from)) {
+                private$assert_ids_exist(from)
+            }
+
+            # build step graph
+            private$build_step_graph(
+                to = to, from = from, add_attrs = add_attrs
+            )
+        },
+
         #' @description
         #'  Plot the step dependencies tree.
-        #' @param to,from The step to start the search to create the step
-        #'   dependencies graph. If `to` is specified, all steps from which step
-        #'   (to) is reachable are extracted. If `from` is specified, all steps
-        #'   reachable from step (from) are extracted. If both are specified,
-        #'   only `to` is used.
         #' @param layout Gives the layout of the graphs.
         #' @param ... Other arguments passed to [`plot`][igraph::plot.igraph].
         plot_step_graph = function(to = NULL, from = NULL, layout = igraph::layout_as_tree, ...) {
-            step_graph <- private$build_step_graph(
+            step_graph <- self$get_step_graph(
                 to = to, from = from, add_attrs = TRUE
             )
             plot(step_graph, layout = layout, ...)
@@ -379,7 +430,7 @@ Pipeline <- R6::R6Class("Pipeline",
                 }
             }
             result <- eval_step(step,
-                mask = private$envir, 
+                mask = private$envir,
                 pipeline = self,
                 envir = envir
             )
@@ -398,13 +449,12 @@ Pipeline <- R6::R6Class("Pipeline",
             private$finish_step_internal(id)
             result
         },
-
-        ### build step dependencies network as an graph object
+        ### Build step dependencies network as an graph object
         build_step_graph = function(to = NULL, from = NULL, add_attrs = FALSE) {
-            step_list <- unclass(private$step_tree)
-            if (is.null(step_list)) {
+            if (identical(length(private$step_tree), 0L)) {
                 return(NULL)
             }
+            step_list <- unclass(private$step_tree)
             step_graph <- build_step_graph_helper(
                 step_list,
                 add_attrs = add_attrs

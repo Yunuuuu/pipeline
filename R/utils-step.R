@@ -1,11 +1,11 @@
 #' Run step
 #'
 #' @param step A step object.
-#' @param self The public environment.
-#' @param private The private environment.
+#' @param mask The environment used as data mask.
+#' @param pipeline The pipeline object.
 #' @param envir The environment in which to evaluate step.
 #' @noRd
-eval_step <- function(step, self, private, envir) {
+eval_step <- function(step, mask, pipeline = NULL, envir = rlang::caller_env()) {
     # if there is any seed, we set seed and then restore the existed seed in the
     # globalenv()
     if (isTRUE(step$seed) || rlang::is_scalar_integer(step$seed) || rlang::is_scalar_double(step$seed)) {
@@ -29,8 +29,20 @@ eval_step <- function(step, self, private, envir) {
     }
 
     # use the environment attached in private as the mask
-    mask <- rlang::new_data_mask(private$envir)
+    mask <- rlang::new_data_mask(mask)
     mask$.data <- rlang::as_data_pronoun(mask)
+
+    # install .pipeline referring to the Pipeline itself (R6 Pipeline)
+    # A R6 object is just a environment, we can use it directly as a pronoun
+    if (!is.null(pipeline)) {
+        mask$.pipeline <- rlang::as_data_pronoun(pipeline)
+    }
+
+    # install .step referring to the step itself
+    other_items <- step[setdiff(
+        names(step), c("id", "call", "deps", "finished", "return", "seed")
+    )]
+    mask$.step <- rlang::as_data_pronoun(other_items)
 
     # then we run the command attached with this step
     rlang::eval_tidy(step$call, data = mask, env = envir)

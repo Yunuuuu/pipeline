@@ -20,7 +20,6 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @return A new `Pipeline` object.
         initialize = function(..., data = list()) {
             private$envir <- rlang::new_environment(data = data)
-            self$env_bind(self = self)
             self$set_step_tree(...)
             invisible(self)
         },
@@ -380,7 +379,8 @@ Pipeline <- R6::R6Class("Pipeline",
                 }
             }
             result <- eval_step(step,
-                self = self, private = private,
+                mask = private$envir, 
+                pipeline = self,
                 envir = envir
             )
 

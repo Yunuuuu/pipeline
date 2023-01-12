@@ -1,7 +1,7 @@
 if (getRversion() >= "2.15.1") {
     utils::globalVariables(
         c(
-            "self", # used to specify R6 class
+            ".pipeline", "step", # used as data pronoun
             # `cellmarker_prepare`
             "gene_list",
             # Variable used in function `cellmarker_search`

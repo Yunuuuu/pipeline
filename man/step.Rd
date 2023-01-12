@@ -2,7 +2,7 @@
 % Please edit documentation in R/class-step.R
 \name{step}
 \alias{step}
-\alias{new_step}
+\alias{create_step}
 \alias{[[.step}
 \alias{[[<-.step}
 \alias{$.step}
@@ -13,7 +13,7 @@
 \usage{
 step(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...)
 
-new_step(
+create_step(
   id,
   call,
   deps = NULL,
@@ -39,11 +39,8 @@ new_step(
 \item{id}{A scalar character indicates the identification of the step. Must
 be unique across the \code{step_tree}.}
 
-\item{call}{The command to run. Notes: this will be enclosed by
-<\code{\link[rlang:enquo]{rlang::enquo()}}> to bundle the environment of users. If you use the step
-in another environment other than the current environment. You should use
-\link{new_step} or quote the expression firstly then use
-<\code{\link[rlang:injection-operator]{!!}}> to inject the call expression in \link{step}.}
+\item{call}{The call define the command to run. Function \code{step} will use
+<\code{\link[rlang:enquo]{rlang::enquo()}}> to defuse this argument.}
 
 \item{deps}{A character vector or \code{NULL} defines the upstream steps to run
 before runing this step. \code{NULL} means no dependencies.}
@@ -75,8 +72,7 @@ A \code{step} object.
 }
 \description{
 A \code{step} object define the command to run in the pipeline.
-\itemize{
-\item step: user-friendly helper, the \code{call} will be defused as a quosure.
-\item new_step: low-level constructor, the \code{call} will used as is.
-}
+
+Both \code{step} and \code{create_step} do the same thing, except that \code{step} function
+also defuse the \code{call} argument as a quosure.
 }

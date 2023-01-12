@@ -2,14 +2,16 @@ test_that("`step` id argument works", {
     expect_error(step(1L, paste(1, 2)))
     expect_error(step("", paste(1, 2)))
     expect_error(step(NA_character_, paste(1, 2)))
-    expect_error(step("self", paste(1, 2)))
+    expect_error(step(".data", paste(1, 2)))
+    expect_error(step(".pipeline", paste(1, 2)))
+    expect_error(step(".step", paste(1, 2)))
     expect_error(step(c("a", "b"), paste(1, 2)))
     expect_s3_class(step("a", paste(1, 2)), "step")
 })
 
-test_that("`new_step` call argument works", {
-    expect_error(new_step("a", 2))
-    expect_s3_class(new_step("a", rlang::quo(1L)), "step")
+test_that("`create_step` call argument works", {
+    expect_error(create_step("a", 2))
+    expect_s3_class(create_step("a", rlang::quo(1L)), "step")
 })
 
 test_that("`step` deps argument works", {

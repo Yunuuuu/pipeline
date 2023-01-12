@@ -1,15 +1,15 @@
 #' Build a `step` object
+#'
 #' @description
 #' A `step` object define the command to run in the pipeline.
-#'  - step: user-friendly helper, the `call` will be defused as a quosure.
-#'  - new_step: low-level constructor, the `call` will used as is.
+#'
+#' Both `step` and `create_step` do the same thing, except that `step` function
+#' also defuse the `call` argument as a quosure.
+#'
 #' @param id A scalar character indicates the identification of the step. Must
 #' be unique across the `step_tree`.
-#' @param call The command to run. Notes: this will be enclosed by
-#' <[`rlang::enquo()`]> to bundle the environment of users. If you use the step
-#' in another environment other than the current environment. You should use
-#' [new_step] or quote the expression firstly then use
-#' <[`!!`][rlang::injection-operator]> to inject the call expression in [step].
+#' @param call The call define the command to run. Function `step` will use
+#'   <[`rlang::enquo()`]> to defuse this argument.
 #' @param deps A character vector or `NULL` defines the upstream steps to run
 #' before runing this step. `NULL` means no dependencies.
 #' @param finished A scalar `logical` indicates whether this step has been
@@ -24,85 +24,90 @@
 #' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> Other items to extend `step`
 #'   object.
 #' @return A `step` object.
-#' @name step
 #' @export
+#' @name step
 step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
-    new_step(
-        id = id,
-        call = rlang::enquo(call),
-        deps = deps,
-        finished = finished,
-        return = return,
-        seed = seed,
+    create_step(
+        id = id, call = rlang::enquo(call), deps = deps,
+        finished = finished, return = return, seed = seed,
         ...
     )
 }
 
-# low-level constructor
-# steps define the command the run in the analysis pipeline
 #' @export
 #' @rdname step
-new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
-    # assert id
-    assert_class(id, is.character, class = "character", null_ok = FALSE)
-    assert_length(id, 1L, null_ok = FALSE)
-    if (is.na(id) || id == "") {
-        cli::cli_abort("{.arg id} can't use {.val } or {.code NA_character_}")
-    } else if (id == "self") {
-        cli::cli_abort("{.arg id} can't use reserved names {.val self}")
-    }
-
-    # assert call
-    assert_class(call, rlang::is_call, class = "call", null_ok = FALSE)
-
-    # assert deps
-    assert_class(deps, is.character, class = "character", null_ok = TRUE)
-
-    # assert finished
-    assert_class(finished, is.logical, class = "logical", null_ok = FALSE)
-    assert_length(finished, 1L, null_ok = FALSE)
-    if (is.na(finished)) {
-        cli::cli_abort("{.arg finished} can't use {.code NA}")
-    }
-
-    # assert return
-    assert_class(return, is.logical, class = "logical", null_ok = FALSE)
-    assert_length(return, 1L, null_ok = FALSE)
-    if (is.na(return)) {
-        cli::cli_abort("{.arg return} can't use {.code NA_character_}")
-    }
-
-    # assert seed
-    if (!(rlang::is_scalar_logical(seed) ||
-        rlang::is_scalar_double(seed) ||
-        rlang::is_scalar_integer(seed))) {
-        cli::cli_abort("{.arg seed} must be a scalar {.cls logical} or {.cls numeric}")
-    }
-    if (is.na(seed)) {
-        cli::cli_abort("{.arg seed} can't use {.code NA}")
-    }
-
+create_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
     # assert ...
     dots <- rlang::dots_list(..., .homonyms = "error")
     if (length(dots) && !all(has_names(dots))) {
         cli::cli_abort("all items in {.arg ...} must be named")
     }
-    structure(
-        rlang::dots_list(
-            id = id, call = call, deps = deps,
-            finished = finished, return = return,
-            seed = seed,
-            !!!dots
-        ),
-        class = c("step", "Pipeline")
+    x <- list(
+        id = id, call = call,
+        deps = deps, finished = finished,
+        return = return, seed = seed
     )
+    x <- c(x, dots)
+    validate_step(new_step(x))
 }
 
-#' @export
+# low-level constructor
+# steps define the command the run in the analysis pipeline
+#' @noRd
+new_step <- function(x) {
+    stopifnot(is.list(x))
+    structure(x, class = c("step", "Pipeline"))
+}
+
+validate_step <- function(x) {
+    step <- unclass(x)
+    # assert id
+    assert_class(step$id, is.character, class = "character", null_ok = FALSE)
+    assert_length(step$id, 1L, null_ok = FALSE)
+    reserved_names <- c(".data", ".pipeline", ".step")
+    if (is.na(step$id) || step$id == "") {
+        cli::cli_abort("{.arg step$id} can't use {.val } or {.code NA_character_}")
+    } else if (step$id %in% reserved_names) {
+        cli::cli_abort("{.arg id} can't use reserved names {.val {reserved_names}}")
+    }
+
+    # assert call
+    assert_class(step$call, rlang::is_call, class = "call", null_ok = FALSE)
+
+    # assert deps
+    assert_class(step$deps, is.character, class = "character", null_ok = TRUE)
+
+    # assert finished
+    assert_class(step$finished, is.logical, class = "logical", null_ok = FALSE)
+    assert_length(step$finished, 1L, null_ok = FALSE)
+    if (is.na(step$finished)) {
+        cli::cli_abort("{.arg step$finished} can't use {.code NA}")
+    }
+
+    # assert return
+    assert_class(step$return, is.logical, class = "logical", null_ok = FALSE)
+    assert_length(step$return, 1L, null_ok = FALSE)
+    if (is.na(step$return)) {
+        cli::cli_abort("{.arg step$return} can't use {.code NA_character_}")
+    }
+
+    # assert seed
+    if (!(rlang::is_scalar_logical(step$seed) ||
+        rlang::is_scalar_double(step$seed) ||
+        rlang::is_scalar_integer(step$seed))) {
+        cli::cli_abort("{.arg step$seed} must be a scalar {.cls logical} or {.cls numeric}")
+    }
+    if (is.na(step$seed)) {
+        cli::cli_abort("{.arg step$seed} can't use {.code NA}")
+    }
+    x
+}
+
 #' @param x A `step` object from which to extract element(s) or in which to
 #' replace element(s).
 #' @param i The indices specifying elements to extract or replace
 #' @param value The value to replace with.
+#' @export
 #' @rdname step
 `[[.step` <- function(x, i) {
     NextMethod()
@@ -111,7 +116,7 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 #' @export
 #' @rdname step
 `[[<-.step` <- function(x, i, value) {
-    rlang::inject(new_step(!!!NextMethod()))
+    validate_step(new_step(NextMethod()))
 }
 
 #' @export
@@ -131,7 +136,7 @@ new_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, see
 #' @export
 #' @rdname step
 `[<-.step` <- function(x, i, value) {
-    rlang::inject(new_step(!!!NextMethod()))
+    validate_step(new_step(NextMethod()))
 }
 
 #' Reports whether x is a `step` object

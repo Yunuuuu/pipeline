@@ -369,8 +369,8 @@ Pipeline <- R6::R6Class("Pipeline",
                     "Provided {.arg variable} must be defused as a simple {.cls symbol}."
                 )
             }
-            rlang::env_unbind(rlang::quo_get_env(variable), nms = nm)
             self$env_bind(!!nm := rlang::eval_tidy(variable))
+            rlang::env_unbind(rlang::quo_get_env(variable), nms = nm)
             invisible(self)
         },
         #' @description Names of symbols bound in the attached environment

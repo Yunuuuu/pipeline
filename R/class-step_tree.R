@@ -20,6 +20,7 @@ step_tree <- function(...) {
 #' low-level constructor
 #' @noRd
 new_step_tree <- function(step_list) {
+    stopifnot(is.list(step_list))
     if (!all(vapply(step_list, is_step, logical(1L), USE.NAMES = FALSE))) {
         cli::cli_abort("all elements must be {.cls step} object")
     }

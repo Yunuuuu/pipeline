@@ -137,8 +137,8 @@ Add a new step in the \code{Pipeline} step_tree.
 \describe{
 \item{\code{step}}{A \link{step} object.}
 
-\item{\code{reset}}{A scalar logical value indicates whether we should label all
-downstream steps as unfinished.}
+\item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
+step) as unfinished.}
 }
 \if{html}{\out{</div>}}
 }
@@ -160,8 +160,8 @@ object, names in ... don't make sense since we always use the step id as
 the names. steps must be unique with no duplicated ids. Can also provided
 as a list of steps directly.}
 
-\item{\code{reset}}{A scalar logical value indicates whether we should label all
-downstream steps as unfinished.}
+\item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
+step) as unfinished.}
 }
 \if{html}{\out{</div>}}
 }
@@ -178,10 +178,11 @@ Remove steps in the \code{Pipeline} step_tree.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{ids}}{Atomic character, the steps to remove from the \code{Pipeline}.}
+\item{\code{ids}}{An atomic character, the steps to remove from the
+\code{Pipeline}.}
 
-\item{\code{reset}}{A scalar logical value indicates whether we should label all
-downstream steps as unfinished.}
+\item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
+step) as unfinished.}
 }
 \if{html}{\out{</div>}}
 }
@@ -201,8 +202,8 @@ will also label all steps depending on this step as unfinished.
 \describe{
 \item{\code{id}}{A scalar character of the step name.}
 
-\item{\code{downstream}}{A logical value indicates whether resetting
-downstream steps.}
+\item{\code{downstream}}{If \code{TRUE}, will label all downstream steps (depend
+on current step) as unfinished.}
 }
 \if{html}{\out{</div>}}
 }
@@ -252,8 +253,8 @@ Modify the step components.
 indicates the components to replace in the \code{step}. \code{NULL} will be
 kept, use \code{\link[=zap]{zap()}} to remove a component from the step.}
 
-\item{\code{reset}}{A scalar logical value indicates whether we should label all
-downstream steps as unfinished.}
+\item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
+step) as unfinished.}
 }
 \if{html}{\out{</div>}}
 }
@@ -277,8 +278,8 @@ convenient way to modify the call argument.
 expressions (constants, names or calls) used to modify the call.
 Use \code{\link[=zap]{zap()}} to remove arguments. Empty arguments are preserved.}
 
-\item{\code{reset}}{A scalar logical value indicates whether we should label all
-downstream steps as unfinished.}
+\item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
+step) as unfinished.}
 }
 \if{html}{\out{</div>}}
 }
@@ -353,7 +354,7 @@ Running the step
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_step(
   id,
   refresh = FALSE,
-  reset = TRUE,
+  reset = FALSE,
   envir = rlang::caller_env()
 )}\if{html}{\out{</div>}}
 }
@@ -363,11 +364,13 @@ Running the step
 \describe{
 \item{\code{id}}{Name of the step object.}
 
-\item{\code{refresh}}{A scalar logical value indicates if we should run step
-even it has been finished.}
+\item{\code{refresh}}{If \code{TRUE}, the step will be evaluated no matter wether the
+step has been finished or not. Otherwise the step will only be evaluated if
+it has never been evaluated once, in which case, the result will be obtained
+directly from the last evaluated result.}
 
-\item{\code{reset}}{A scalar logical value indicates whether we should label all
-downstream steps as unfinished.}
+\item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
+step) as unfinished.}
 
 \item{\code{envir}}{The environment in which to evaluate the \code{expression} in
 the step.}
@@ -384,7 +387,7 @@ Running the steps until the target step
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_targets(
   targets = NULL,
   refresh = FALSE,
-  reset = TRUE,
+  reset = FALSE,
   envir = rlang::caller_env()
 )}\if{html}{\out{</div>}}
 }
@@ -395,11 +398,13 @@ Running the steps until the target step
 \item{\code{targets}}{<\code{\link[tidyselect:language]{tidy-select}}>, A set of
 target steps until which to run.}
 
-\item{\code{refresh}}{A scalar logical value indicates if we should run step
-even it has been finished.}
+\item{\code{refresh}}{If \code{TRUE}, the step will be evaluated no matter wether the
+step has been finished or not. Otherwise the step will only be evaluated if
+it has never been evaluated once, in which case, the result will be obtained
+directly from the last evaluated result.}
 
-\item{\code{reset}}{A scalar logical value indicates whether we should label all
-downstream steps as unfinished.}
+\item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
+step) as unfinished.}
 
 \item{\code{envir}}{The environment in which to evaluate the \code{expression} in
 the step.}

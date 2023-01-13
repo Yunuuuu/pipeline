@@ -6,8 +6,12 @@
 #'   evaluation frame in a object.
 #' @param id A scalar character of the step name.
 #' @param step A [step] object.
-#' @param reset A scalar logical value indicates whether we should label all
-#'   downstream steps as unfinished.
+#' @param reset If `TRUE`, will label all downstream steps (depend on current
+#' step) as unfinished.
+#' @param refresh If `TRUE`, the step will be evaluated no matter wether the
+#' step has been finished or not. Otherwise the step will only be evaluated if
+#' it has never been evaluated once, in which case, the result will be obtained
+#' directly from the last evaluated result.
 #' @param ... <[`dynamic-dots`][rlang::dyn-dots]> all items must be `step`
 #'   object, names in ... don't make sense since we always use the step id as
 #'   the names. steps must be unique with no duplicated ids. Can also provided
@@ -79,7 +83,7 @@ Pipeline <- R6::R6Class("Pipeline",
             }
             private$step_tree[[id]] <- step
             if (isTRUE(reset)) {
-                private$reset_step_internal(id = id, downstream = TRUE)
+                private$reset_downstream(id = id)
             }
             invisible(self)
         },
@@ -98,7 +102,8 @@ Pipeline <- R6::R6Class("Pipeline",
 
         #' @description
         #' Remove steps in the `Pipeline` step_tree.
-        #' @param ids Atomic character, the steps to remove from the `Pipeline`.
+        #' @param ids An atomic character, the steps to remove from the
+        #' `Pipeline`.
         remove_steps = function(ids, reset = TRUE) {
             assert_class(ids, is.character,
                 class = "character",
@@ -107,7 +112,7 @@ Pipeline <- R6::R6Class("Pipeline",
             private$assert_ids_exist(ids)
             for (id in ids) {
                 if (isTRUE(reset)) {
-                    private$reset_step_internal(id = id, downstream = TRUE)
+                    private$reset_downstream(id = id)
                 }
                 private$step_tree[[id]] <- NULL
             }
@@ -116,13 +121,16 @@ Pipeline <- R6::R6Class("Pipeline",
 
         #' @description Label the step as unfinished. If downstream is `TRUE`,
         #'   will also label all steps depending on this step as unfinished.
-        #' @param downstream A logical value indicates whether resetting
-        #'   downstream steps.
+        #' @param downstream If `TRUE`, will label all downstream steps (depend
+        #' on current step) as unfinished.
         reset_step = function(id, downstream = TRUE) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
             private$assert_ids_exist(id)
-            private$reset_step_internal(id = id, downstream = downstream)
+            private$reset_step_internal(id = id)
+            if (downstream) {
+                private$reset_downstream(id = id)
+            }
             invisible(self)
         },
 
@@ -131,7 +139,7 @@ Pipeline <- R6::R6Class("Pipeline",
         reset_step_tree = function() {
             ids <- names(private$step_tree)
             for (id in ids) {
-                private$reset_step_internal(id = id, downstream = FALSE)
+                private$reset_step_internal(id = id)
             }
             invisible(self)
         },
@@ -159,7 +167,7 @@ Pipeline <- R6::R6Class("Pipeline",
             step <- validate_step(new_step(modify_list(unclass(step), dots)))
             private$step_tree[[id]] <- step
             if (isTRUE(reset)) {
-                private$reset_step_internal(id = id, downstream = TRUE)
+                private$reset_downstream(id = id)
             }
             invisible(self)
         },
@@ -193,7 +201,7 @@ Pipeline <- R6::R6Class("Pipeline",
                 )
                 private$step_tree[[id]] <- step
                 if (isTRUE(reset)) {
-                    private$reset_step_internal(id = id, downstream = TRUE)
+                    private$reset_downstream(id = id)
                 }
             }
             invisible(self)
@@ -241,11 +249,9 @@ Pipeline <- R6::R6Class("Pipeline",
         #' Running the step
         #'
         #' @param id Name of the step object.
-        #' @param refresh A scalar logical value indicates if we should run step
-        #' even it has been finished.
         #' @param envir The environment in which to evaluate the `expression` in
         #'   the step.
-        run_step = function(id, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
+        run_step = function(id, refresh = FALSE, reset = FALSE, envir = rlang::caller_env()) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
             private$assert_ids_exist(id)
@@ -259,11 +265,9 @@ Pipeline <- R6::R6Class("Pipeline",
         #' Running the steps until the target step
         #' @param targets <[`tidy-select`][tidyselect::language]>, A set of
         #'   target steps until which to run.
-        #' @param refresh A scalar logical value indicates if we should run step
-        #' even it has been finished.
         #' @param envir The environment in which to evaluate the `expression` in
         #'   the step.
-        run_targets = function(targets = NULL, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
+        run_targets = function(targets = NULL, refresh = FALSE, reset = FALSE, envir = rlang::caller_env()) {
             # build dependencies graph
             step_graph <- private$build_step_graph(add_attrs = TRUE)
             attrs <- igraph::vertex_attr(step_graph)[c("name", "levels")]
@@ -273,7 +277,7 @@ Pipeline <- R6::R6Class("Pipeline",
             # without child steps will be used
             step_list <- unclass(private$step_tree)
             targets <- rlang::enquo(targets)
-            if (is.null(rlang::get_expr(targets))) {
+            if (rlang::quo_is_null(targets)) {
                 targets <- names(igraph::V(step_graph))[
                     igraph::degree(step_graph, mode = "out") == 0L
                 ]
@@ -392,6 +396,7 @@ Pipeline <- R6::R6Class("Pipeline",
 
         ## For the usage of asserting the public method arguments
         assert_ids_exist = function(ids, arg = rlang::caller_arg(ids), call = rlang::caller_env()) {
+            force(arg)
             missing_ids <- setdiff(ids, names(private$step_tree))
             if (length(missing_id)) {
                 cli::cli_abort(c(
@@ -408,24 +413,23 @@ Pipeline <- R6::R6Class("Pipeline",
         },
 
         ### label step (including downstream steps depend on it) as unfinished
-        reset_step_internal = function(id, downstream = TRUE) {
-            if (isTRUE(downstream)) {
-                downstream_steps <- private$build_step_graph(
-                    from = id, add_attrs = FALSE
-                )
-                reset_ids <- names(igraph::V(downstream_steps))
-            } else {
-                reset_ids <- id
-            }
+        reset_step_internal = function(id) {
+            private$step_tree[[id]]$finished <- FALSE
+        },
+        reset_downstream = function(id) {
+            downstream_steps <- private$build_step_graph(
+                from = id, add_attrs = FALSE
+            )
+            reset_ids <- setdiff(names(igraph::V(downstream_steps)), id)
             for (reset_id in reset_ids) {
                 if (reset_id %in% names(private$step_tree)) {
-                    private$step_tree[[reset_id]]$finished <- FALSE
+                    private$reset_step_internal(reset_id)
                 }
             }
         },
 
         ### run the step and return the result
-        run_step_internal = function(id, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
+        run_step_internal = function(id, refresh = FALSE, reset = FALSE, envir = rlang::caller_env()) {
             step <- private$step_tree[[id]]
             # if this step has been finished, and refresh is FALSE
             # Just return the value from the environment
@@ -447,13 +451,11 @@ Pipeline <- R6::R6Class("Pipeline",
             } else {
                 result <- NULL
             }
+            private$finish_step_internal(id)
 
             if (isTRUE(reset)) {
-                private$reset_step_internal(
-                    id = id, downstream = TRUE
-                )
+                private$reset_downstream(id = id)
             }
-            private$finish_step_internal(id)
             result
         },
         ### Build step dependencies network as an graph object

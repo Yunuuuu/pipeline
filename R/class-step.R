@@ -22,8 +22,8 @@
 #' expression is evaluated with a seed (based on the hash of the expression
 #' object).  Otherwise, the expression is evaluated without seed. if `numeric`,
 #' seed will be set by `set.seed(as.integer(seed))`.
-#' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> Other items to extend `step`
-#'   object.
+#' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> named values, other items to
+#'   extend `step` object.
 #' @return A `step` object.
 #' @export
 #' @name step
@@ -38,17 +38,13 @@ step <- function(id, expression, deps = NULL, finished = FALSE, return = TRUE, s
 #' @export
 #' @rdname step
 create_step <- function(id, expression, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
-    # assert ...
-    dots <- rlang::dots_list(..., .homonyms = "error")
-    if (length(dots) && !all(has_names(dots))) {
-        cli::cli_abort("all items in {.arg ...} must be named")
-    }
-    x <- list(
+    x <- rlang::dots_list(
         id = id, expression = expression,
         deps = deps, finished = finished,
-        return = return, seed = seed
+        return = return, seed = seed,
+        ...,
+        .homonyms = "error"
     )
-    x <- c(x, dots)
     validate_step(new_step(x))
 }
 
@@ -62,6 +58,12 @@ new_step <- function(x) {
 
 validate_step <- function(x) {
     step <- unclass(x)
+
+    # assert names
+    if (length(step) && !all(has_names(step))) {
+        cli::cli_abort("all items in {.cls step} must be named")
+    }
+
     # assert id
     assert_class(step$id, is.character, class = "character", null_ok = FALSE)
     assert_length(step$id, 1L, null_ok = FALSE)

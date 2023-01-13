@@ -66,8 +66,8 @@ expression is evaluated with a seed (based on the hash of the expression
 object).  Otherwise, the expression is evaluated without seed. if \code{numeric},
 seed will be set by \code{set.seed(as.integer(seed))}.}
 
-\item{...}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> Other items to extend \code{step}
-object.}
+\item{...}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> named values, other items to
+extend \code{step} object.}
 
 \item{x}{A \code{step} object from which to extract element(s) or in which to
 replace element(s).}

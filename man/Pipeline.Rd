@@ -49,8 +49,9 @@ Create a new person object.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> should be \code{step}
-object used to create \code{Pipeline} step_tree.}
+\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be a \code{step}
+object without name. steps must be unique with no duplicated ids. Can also
+provide as a list of steps directly.}
 
 \item{\code{data}}{A data list to build the attached environment which is
 used to evaluate the variable in the step expression object. One
@@ -74,10 +75,9 @@ Set the step tree in the \code{Pipeline} object
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be \code{step}
-object, names in ... don't make sense since we always use the step id as
-the names. steps must be unique with no duplicated ids. Can also provided
-as a list of steps directly.}
+\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be a \code{step}
+object without name. steps must be unique with no duplicated ids. Can also
+provide as a list of steps directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -155,10 +155,10 @@ Add new steps in the \code{Pipeline} step_tree.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be \code{step}
-object, names in ... don't make sense since we always use the step id as
-the names. steps must be unique with no duplicated ids. Can also provided
-as a list of steps directly.}
+\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be a
+\code{step} object without name. Any duplicated steps (with duplicated
+id) are only included once, the latter one will override the
+former. Can also provide as a list of steps directly.}
 
 \item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
 step) as unfinished.}

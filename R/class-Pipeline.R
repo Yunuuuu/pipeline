@@ -12,10 +12,9 @@
 #' step has been finished or not. Otherwise the step will only be evaluated if
 #' it has never been evaluated once, in which case, the result will be obtained
 #' directly from the last evaluated result.
-#' @param ... <[`dynamic-dots`][rlang::dyn-dots]> all items must be `step`
-#'   object, names in ... don't make sense since we always use the step id as
-#'   the names. steps must be unique with no duplicated ids. Can also provided
-#'   as a list of steps directly.
+#' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> all items must be a `step`
+#'   object without name. steps must be unique with no duplicated ids. Can also
+#'   provide as a list of steps directly.
 #' @param to The step to start the search to create the step dependencies graph.
 #'   If `to` is specified, all steps from which the (to) step is reachable are
 #'   extracted.
@@ -26,8 +25,6 @@ Pipeline <- R6::R6Class("Pipeline",
     public = list(
         #' @description
         #' Create a new person object.
-        #' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> should be `step`
-        #'   object used to create `Pipeline` step_tree.
         #' @param data A data list to build the attached environment which is
         #'   used to evaluate the variable in the step expression object. One
         #'   can also use `$env_bind` method to add new variable.
@@ -89,7 +86,12 @@ Pipeline <- R6::R6Class("Pipeline",
         },
         #' @description
         #' Add new steps in the `Pipeline` step_tree.
+        #' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> all items must be a
+        #'   `step` object without name. Any duplicated steps (with duplicated
+        #'   id) are only included once, the latter one will override the
+        #'   former. Can also provide as a list of steps directly.
         add_steps = function(..., reset = TRUE) {
+            rlang::check_dots_unnamed()
             dots <- rlang::dots_list(..., .named = NULL)
             if (identical(length(dots), 1L) && !is_step(dots[[1L]]) && is.list(dots[[1L]])) {
                 dots <- dots[[1L]]
@@ -163,7 +165,7 @@ Pipeline <- R6::R6Class("Pipeline",
             assert_length(id, 1L, null_ok = FALSE)
             private$assert_ids_exist(id)
             step <- private$step_tree[[id]]
-            dots <- rlang::dots_list(..., .homonyms = "error")
+            dots <- check_dots_named(...)
             step <- validate_step(new_step(modify_list(unclass(step), dots)))
             private$step_tree[[id]] <- step
             if (isTRUE(reset)) {

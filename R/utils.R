@@ -105,18 +105,10 @@ rename <- function(x, replace) {
 
 # `NULL` passed to ... will also be kept
 #' @param x A list to modify
-#' @param replace A list used to replace (or add) value in the `x`
+#' @param replace A named list used to replace (or add) value in the `x`
 #' @param restrict Only modify the giving items
 #' @noRd
 modify_list <- function(x, replace, restrict = NULL) {
-    replace_has_names <- has_names(replace)
-    if (!all(replace_has_names)) {
-        cli::cli_warn(c(
-            "All items should be named, Only use the named items.",
-            "!" = "A total of {.val {sum(!replace_has_names)}} item{?s} will be omitted"
-        ))
-        replace <- replace[replace_has_names]
-    }
     if (is.null(restrict)) {
         restrict <- names(replace)
     } else {
@@ -131,6 +123,14 @@ modify_list <- function(x, replace, restrict = NULL) {
         }
     }
     x
+}
+
+check_dots_named <- function(...) {
+    dots <- rlang::dots_list(..., .homonyms = "error")
+    if (!all(has_names(dots))) {
+        cli::cli_abort("All items in {.arg ...} must be named")
+    }
+    dots
 }
 
 # call object utils ----------------------------------------

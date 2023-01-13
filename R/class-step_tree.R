@@ -2,14 +2,14 @@
 #' @description
 #' A `step_tree` is a list of steps, the element names are always the same with
 #' the step ids.
-#' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> all items must be `step`
-#'   object, names in ... don't make sense since we always use the step id as
-#'   the names. steps must be unique with no duplicated ids. Can also provide as
-#'   a list of steps directly.
+#' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> all items must be a `step`
+#'   object without name. steps must be unique with no duplicated ids. Can also
+#'   provide as a list of steps directly.
 #' @return A `step_tree` object.
 #' @name step_tree
 #' @export
 step_tree <- function(...) {
+    rlang::check_dots_unnamed()
     dots <- rlang::dots_list(..., .named = NULL)
     if (identical(length(dots), 1L) && !is_step(dots[[1L]]) && is.list(dots[[1L]])) {
         dots <- dots[[1L]]

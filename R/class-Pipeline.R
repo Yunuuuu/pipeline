@@ -74,9 +74,9 @@ Pipeline <- R6::R6Class("Pipeline",
         add_step = function(step, reset = TRUE) {
             id <- step$id
             if (id %in% names(private$step_tree)) {
-                cli::cli_warn(
+                cli::cli_warn(c(
                     "!" = "Override the existed {.field step}: {.val {id}}"
-                )
+                ))
             }
             private$step_tree[[id]] <- step
             if (isTRUE(reset)) {

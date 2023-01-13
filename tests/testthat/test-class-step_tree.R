@@ -1,10 +1,10 @@
 test_that("step_tree works", {
     step_tree1 <- step_tree(
-        a_name = step("a", paste(1, 2), deps = c("b", "c")),
-        b_name = step("b", c(c, 1, 2), deps = "c"),
-        c_name = step("c", c(1, 2), return = TRUE),
-        d_name = step("d", "d", deps = NULL),
-        e_name = step("e", 1, "f")
+        step("a", paste(1, 2), deps = c("b", "c")),
+        step("b", c(c, 1, 2), deps = "c"),
+        step("c", c(1, 2), return = TRUE),
+        step("d", "d", deps = NULL),
+        step("e", 1, "f")
     )
     expect_identical(names(step_tree1), letters[1:5])
     expect_s3_class(step_tree1, "step_tree")

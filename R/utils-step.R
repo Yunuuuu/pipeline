@@ -48,25 +48,37 @@ eval_step <- function(step, mask, pipeline = NULL, envir = rlang::caller_env()) 
     rlang::eval_tidy(step$expression, data = mask, env = envir)
 }
 
-#' @param other_items User provided arguments to modify the default step items.
+#' @param step_param User provided step components to modify the default step
+#' items.
 #' @param default The default components for this step.
-#' @noRd 
-build_step <- function(id, expression, other_items, default) {
-    step_param <- modify_list(default, other_items)
+#' @noRd
+build_step <- function(id, expression, step_param, default,
+                       arg = rlang::caller_arg(step_param),
+                       call = rlang::caller_env()) {
+    if (!all(has_names(step_param))) {
+        cli::cli_abort(
+            "All items in {.arg {arg}} must be named",
+            call = call
+        )
+    }
+    step_param <- modify_list(default, step_param)
     rlang::inject(create_step(
-        id = id, expression = expression, !!!step_param
+        id = id, expression = expression,
+        !!!step_param
     ))
 }
 
-#' @description 
-#' we use `[rlang::enquo()]` defuse a function argument, then pass the argument
-#' into this function.
-#' @param x A quosure provided as a single symbol.
-#' @return A quosure object if provided argument is not missing, otherwise, a
-#' symbol of the argument name.
-#' @noRd 
-quo_missing_arg <- function(x, label = rlang::ensym(x)) {
-    if (rlang::quo_is_missing(x)) label else x
+#' @param x A function argument from other function..
+#' @return A quosure object if it is not a missing defused argument, otherwise,
+#' a symbol of the argument name.
+#' @noRd
+quo_or_symbol <- function(x) {
+    symbol <- substitute(x)
+    quo <- rlang::eval_bare(
+        rlang::expr(rlang::enquo(!!symbol)),
+        env = rlang::caller_env()
+    )
+    if (rlang::quo_is_missing(quo)) symbol else quo
 }
 
 sub_step_graph <- function(step_graph, to = NULL, from = NULL) {
@@ -94,22 +106,14 @@ sub_step_graph <- function(step_graph, to = NULL, from = NULL) {
     }
 }
 
-#' @return a list of character vector, if a step has no dependencies, `NA` will
-#'   be returned.
-#' @keywords internal
-#' @noRd
-extract_step_deps <- function(step_list) {
-    lapply(step_list, function(x) {
+build_step_graph_helper <- function(step_list, add_attrs = FALSE) {
+    step_deps <- lapply(step_list, function(x) {
         deps <- x[["deps"]]
         if (!length(deps) || all(is.na(deps) | deps == "")) {
             return(NA_character_)
         }
         deps[!is.na(deps)]
     })
-}
-
-build_step_graph_helper <- function(step_list, add_attrs = FALSE) {
-    step_deps <- extract_step_deps(step_list)
     edge_df <- data.frame(
         from = unlist(step_deps, use.names = FALSE),
         to = rep(names(step_deps), lengths(step_deps))
@@ -254,10 +258,8 @@ define_step_levels <- function(ids = NULL, step_deps) {
 #             }
 #         }
 #     }
-
 #     # change the dependency
 #     step$deps <- union(setdiff(step$deps, from), to)
-
 #     # change the call by transforming the symbol returned by "from" step
 #     # into symbol returned by "to" step
 #     step$expression <- rlang::set_expr(

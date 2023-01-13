@@ -105,16 +105,11 @@ rename <- function(x, replace) {
 
 # `NULL` passed to ... will also be kept
 #' @param x A list to modify
-#' @param replace A named list used to replace (or add) value in the `x`
-#' @param restrict Only modify the giving items
+#' @param replace A named list with components to replace (or add) corresponding
+#' components in `x`.
 #' @noRd
-modify_list <- function(x, replace, restrict = NULL) {
-    if (is.null(restrict)) {
-        restrict <- names(replace)
-    } else {
-        restrict <- intersect(restrict, names(replace))
-    }
-    for (name in restrict) {
+modify_list <- function(x, replace) {
+    for (name in names(replace)) {
         value <- replace[[name]]
         if (rlang::is_zap(value)) {
             x[[name]] <- NULL
@@ -125,10 +120,13 @@ modify_list <- function(x, replace, restrict = NULL) {
     x
 }
 
-check_dots_named <- function(...) {
-    dots <- rlang::dots_list(..., .homonyms = "error")
+check_dots_named <- function(..., call = rlang::caller_env()) {
+    dots <- rlang::dots_list(..., .named = NULL, .homonyms = "error")
     if (!all(has_names(dots))) {
-        cli::cli_abort("All items in {.arg ...} must be named")
+        cli::cli_abort(
+            "All items in {.arg ...} must be named",
+            call = call
+        )
     }
     dots
 }

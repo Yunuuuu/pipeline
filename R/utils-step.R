@@ -11,7 +11,7 @@ eval_step <- function(step, mask, pipeline = NULL, envir = rlang::caller_env()) 
     if (isTRUE(step$seed) || rlang::is_scalar_integer(step$seed) || rlang::is_scalar_double(step$seed)) {
         if (isTRUE(step$seed)) {
             seed <- digest::digest2int(
-                digest::digest(step$call, "crc32"),
+                digest::digest(step$expression, "crc32"),
                 seed = 0L
             )
         } else {
@@ -40,21 +40,21 @@ eval_step <- function(step, mask, pipeline = NULL, envir = rlang::caller_env()) 
 
     # install .step referring to the step itself
     other_items <- step[setdiff(
-        names(step), c("id", "call", "deps", "finished", "return", "seed")
+        names(step), c("id", "expression", "deps", "finished", "return", "seed")
     )]
     mask$.step <- rlang::as_data_pronoun(other_items)
 
     # then we run the command attached with this step
-    rlang::eval_tidy(step$call, data = mask, env = envir)
+    rlang::eval_tidy(step$expression, data = mask, env = envir)
 }
 
 #' @param other_items User provided arguments to modify the default step items.
 #' @param default The default components for this step.
 #' @noRd 
-build_step <- function(id, call, other_items, default) {
+build_step <- function(id, expression, other_items, default) {
     step_param <- modify_list(default, other_items)
     rlang::inject(create_step(
-        id = id, call = call, !!!step_param
+        id = id, expression = expression, !!!step_param
     ))
 }
 
@@ -260,10 +260,10 @@ define_step_levels <- function(ids = NULL, step_deps) {
 
 #     # change the call by transforming the symbol returned by "from" step
 #     # into symbol returned by "to" step
-#     step$call <- rlang::set_expr(
-#         step$call,
+#     step$expression <- rlang::set_expr(
+#         step$expression,
 #         value = change_expr(
-#             step$call,
+#             step$expression,
 #             from = rlang::sym(symbol_list[[1L]]),
 #             to = rlang::sym(symbol_list[[2L]])
 #         )

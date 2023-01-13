@@ -4,31 +4,32 @@
 #' A `step` object define the command to run in the pipeline.
 #'
 #' Both `step` and `create_step` do the same thing, except that `step` function
-#' also defuse the `call` argument as a quosure.
+#' also defuse the `expression` argument as a quosure.
 #'
 #' @param id A scalar character indicates the identification of the step. Must
 #' be unique across the `step_tree`.
-#' @param call The call define the command to run. Function `step` will use
-#'   <[`rlang::enquo()`]> to defuse this argument.
+#' @param expression The expression define the command to run. Function `step`
+#'   will use <[`rlang::enquo()`]> to defuse this argument. Details see
+#'   [is_expression][rlang::is_expression]
 #' @param deps A character vector or `NULL` defines the upstream steps to run
 #' before runing this step. `NULL` means no dependencies.
 #' @param finished A scalar `logical` indicates whether this step has been
 #' evaluated.
 #' @param return A scalar `logical` indicates whether to keep the returned
-#' value. if `FALSE`, the result evaluated from `call` won't be kept.
+#' value. if `FALSE`, the result evaluated from `expression` won't be kept.
 #' @param seed A scalar `logical` or `numeric`. a `logical` value indicates
-#' whether to set seed when evaluated the expression in "call". if `TRUE`, the
-#' call is evaluated with a seed (based on the hash of the call object).
-#' Otherwise, the call is evaluated without seed. if `numeric`, seed will be set
-#' by `set.seed(as.integer(seed))`.
+#' whether to set seed when evaluated the "expression". if `TRUE`, the
+#' expression is evaluated with a seed (based on the hash of the expression
+#' object).  Otherwise, the expression is evaluated without seed. if `numeric`,
+#' seed will be set by `set.seed(as.integer(seed))`.
 #' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> Other items to extend `step`
 #'   object.
 #' @return A `step` object.
 #' @export
 #' @name step
-step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
+step <- function(id, expression, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
     create_step(
-        id = id, call = rlang::enquo(call), deps = deps,
+        id = id, expression = rlang::enquo(expression), deps = deps,
         finished = finished, return = return, seed = seed,
         ...
     )
@@ -36,14 +37,14 @@ step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = 
 
 #' @export
 #' @rdname step
-create_step <- function(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
+create_step <- function(id, expression, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
     # assert ...
     dots <- rlang::dots_list(..., .homonyms = "error")
     if (length(dots) && !all(has_names(dots))) {
         cli::cli_abort("all items in {.arg ...} must be named")
     }
     x <- list(
-        id = id, call = call,
+        id = id, expression = expression,
         deps = deps, finished = finished,
         return = return, seed = seed
     )
@@ -71,8 +72,10 @@ validate_step <- function(x) {
         cli::cli_abort("{.arg id} can't use reserved names {.val {reserved_names}}")
     }
 
-    # assert call
-    assert_class(step$call, rlang::is_call, class = "call", null_ok = FALSE)
+    # assert expression
+    assert_class(step$expression, rlang::is_expression,
+        class = "expression", null_ok = FALSE
+    )
 
     # assert deps
     assert_class(step$deps, is.character, class = "character", null_ok = TRUE)

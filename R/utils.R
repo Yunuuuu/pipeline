@@ -5,7 +5,7 @@
 has_names <- function(x) {
     nms <- names(x)
     if (is.null(nms)) {
-        return(rep(FALSE, length(x)))
+        return(rep_len(FALSE, length(x)))
     }
     !is.na(nms) & nms != ""
 }
@@ -24,23 +24,17 @@ assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::calle
         message <- paste(message, "or {.code NULL}", sep = " ")
     }
     message <- sprintf("{.arg {arg}} must be a %s", message)
-    # class sometimes can also contain the `NULL`, so we check is_class firstly
-    # if is_class(NULL) is TRUE, it will be okay for NULL
-    # Otherwise, the result is based on "null_ok" argument
-    if (!is_class(x)) {
-        # if a x is not the specified call
-        # it can be NULL or others
-        if (is.null(x)) {
-            if (null_ok) {
-                cli::cli_abort(c(message,
-                    "x" = "You've supplied a {.code NULL}"
-                ), call = call)
-            }
-        } else {
+    # class sometimes can also contain the `NULL`
+    if (is.null(x) && !is_class(x)) {
+        if (!null_ok) {
             cli::cli_abort(c(message,
-                "x" = "You've supplied a {.cls {class(x)}} object"
+                "x" = "You've supplied a {.code NULL}"
             ), call = call)
         }
+    } else if (!is_class(x)) {
+        cli::cli_abort(c(message,
+            "x" = "You've supplied a {.cls {class(x)}} object"
+        ), call = call)
     }
 }
 
@@ -58,7 +52,7 @@ assert_length <- function(x, length, null_ok = FALSE, arg = rlang::caller_arg(x)
         message <- paste(message, "or {.code NULL}", sep = " ")
     }
     message <- sprintf("{.arg {arg}} must be a %s", message)
-    if (is.null(x)) {
+    if (is.null(x) && !identical(length(x), length)) {
         if (!null_ok) {
             cli::cli_abort(c(message,
                 "x" = "You've supplied a {.code NULL}"

@@ -25,8 +25,8 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> should be `step`
         #'   object used to create `Pipeline` step_tree.
         #' @param data A data list to build the attached environment which is
-        #'   used to evaluate the variable in the step call object. One can also
-        #'   use `$env_bind` method to add new variable.
+        #'   used to evaluate the variable in the step expression object. One
+        #'   can also use `$env_bind` method to add new variable.
         #' @return A new `Pipeline` object.
         initialize = function(..., data = list()) {
             private$envir <- rlang::new_environment(data = data)
@@ -156,7 +156,7 @@ Pipeline <- R6::R6Class("Pipeline",
             private$assert_ids_exist(id)
             step <- private$step_tree[[id]]
             dots <- rlang::dots_list(..., .homonyms = "error")
-            step <- rlang::inject(new_step(!!!modify_list(unclass(step), dots)))
+            step <- validate_step(new_step(modify_list(unclass(step), dots)))
             private$step_tree[[id]] <- step
             if (isTRUE(reset)) {
                 private$reset_step_internal(id = id, downstream = TRUE)
@@ -165,7 +165,8 @@ Pipeline <- R6::R6Class("Pipeline",
         },
 
         #' @description
-        #' Modify the step call arguments.
+        #' If the expression in the step is a call object, this provide a
+        #' convenient way to modify the call argument.
         #' @param ... <[`dynamic-dots`][rlang::dyn-dots]>, Named or unnamed
         #'   expressions (constants, names or calls) used to modify the call.
         #'   Use [`zap()`] to remove arguments. Empty arguments are preserved.
@@ -174,15 +175,21 @@ Pipeline <- R6::R6Class("Pipeline",
             assert_length(id, 1L, null_ok = FALSE)
             private$assert_ids_exist(id)
             step <- private$step_tree[[id]]
+            if (!rlang::is_call(step$expression)) {
+                cli::cli_abort(c(
+                    "the expression of step {val {id}} must be a call object",
+                    "x" = "You've supplied a step with a {.cls {typeof(step$expression)}} expression"
+                ))
+            }
             dots <- rlang::dots_list(...)
             if (length(dots)) {
-                step$call <- rlang::set_expr(
-                    step$call,
-                    call_standardise(step$call)
+                step$expression <- rlang::set_expr(
+                    step$expression,
+                    call_standardise(step$expression)
                 )
-                step$call <- rlang::set_expr(
-                    step$call,
-                    rlang::call_modify(step$call, !!!dots)
+                step$expression <- rlang::set_expr(
+                    step$expression,
+                    rlang::call_modify(step$expression, !!!dots)
                 )
                 private$step_tree[[id]] <- step
                 if (isTRUE(reset)) {
@@ -236,8 +243,8 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @param id Name of the step object.
         #' @param refresh A scalar logical value indicates if we should run step
         #' even it has been finished.
-        #' @param envir The environment in which to evaluate the `call` in the
-        #'   step.
+        #' @param envir The environment in which to evaluate the `expression` in
+        #'   the step.
         run_step = function(id, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
@@ -254,8 +261,8 @@ Pipeline <- R6::R6Class("Pipeline",
         #'   target steps until which to run.
         #' @param refresh A scalar logical value indicates if we should run step
         #' even it has been finished.
-        #' @param envir The environment in which to evaluate the `call` in the
-        #'   step.
+        #' @param envir The environment in which to evaluate the `expression` in
+        #'   the step.
         run_targets = function(targets = NULL, refresh = FALSE, reset = TRUE, envir = rlang::caller_env()) {
             # build dependencies graph
             step_graph <- private$build_step_graph(add_attrs = TRUE)

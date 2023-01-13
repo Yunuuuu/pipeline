@@ -11,11 +11,19 @@
 \alias{[<-.step}
 \title{Build a \code{step} object}
 \usage{
-step(id, call, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...)
+step(
+  id,
+  expression,
+  deps = NULL,
+  finished = FALSE,
+  return = TRUE,
+  seed = FALSE,
+  ...
+)
 
 create_step(
   id,
-  call,
+  expression,
   deps = NULL,
   finished = FALSE,
   return = TRUE,
@@ -39,8 +47,9 @@ create_step(
 \item{id}{A scalar character indicates the identification of the step. Must
 be unique across the \code{step_tree}.}
 
-\item{call}{The call define the command to run. Function \code{step} will use
-<\code{\link[rlang:enquo]{rlang::enquo()}}> to defuse this argument.}
+\item{expression}{The expression define the command to run. Function \code{step}
+will use <\code{\link[rlang:enquo]{rlang::enquo()}}> to defuse this argument. Details see
+\link[rlang:is_expression]{is_expression}}
 
 \item{deps}{A character vector or \code{NULL} defines the upstream steps to run
 before runing this step. \code{NULL} means no dependencies.}
@@ -49,13 +58,13 @@ before runing this step. \code{NULL} means no dependencies.}
 evaluated.}
 
 \item{return}{A scalar \code{logical} indicates whether to keep the returned
-value. if \code{FALSE}, the result evaluated from \code{call} won't be kept.}
+value. if \code{FALSE}, the result evaluated from \code{expression} won't be kept.}
 
 \item{seed}{A scalar \code{logical} or \code{numeric}. a \code{logical} value indicates
-whether to set seed when evaluated the expression in "call". if \code{TRUE}, the
-call is evaluated with a seed (based on the hash of the call object).
-Otherwise, the call is evaluated without seed. if \code{numeric}, seed will be set
-by \code{set.seed(as.integer(seed))}.}
+whether to set seed when evaluated the "expression". if \code{TRUE}, the
+expression is evaluated with a seed (based on the hash of the expression
+object).  Otherwise, the expression is evaluated without seed. if \code{numeric},
+seed will be set by \code{set.seed(as.integer(seed))}.}
 
 \item{...}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> Other items to extend \code{step}
 object.}
@@ -74,5 +83,5 @@ A \code{step} object.
 A \code{step} object define the command to run in the pipeline.
 
 Both \code{step} and \code{create_step} do the same thing, except that \code{step} function
-also defuse the \code{call} argument as a quosure.
+also defuse the \code{expression} argument as a quosure.
 }

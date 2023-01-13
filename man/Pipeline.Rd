@@ -53,8 +53,8 @@ Create a new person object.
 object used to create \code{Pipeline} step_tree.}
 
 \item{\code{data}}{A data list to build the attached environment which is
-used to evaluate the variable in the step call object. One can also
-use \verb{$env_bind} method to add new variable.}
+used to evaluate the variable in the step expression object. One
+can also use \verb{$env_bind} method to add new variable.}
 }
 \if{html}{\out{</div>}}
 }
@@ -262,7 +262,8 @@ downstream steps as unfinished.}
 \if{html}{\out{<a id="method-Pipeline-modify_call"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-modify_call}{}}}
 \subsection{Method \code{modify_call()}}{
-Modify the step call arguments.
+If the expression in the step is a call object, this provide a
+convenient way to modify the call argument.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$modify_call(id, ..., reset = TRUE)}\if{html}{\out{</div>}}
 }
@@ -300,7 +301,7 @@ extracted.}
 
 \item{\code{from}}{The step to start the search to create the step dependencies
 graph. If \code{from} is specified, all steps reachable from the (from) step are
-extracted. only used when \code{to} argument is not specified.}
+extracted. only used when \code{to} argument is \code{NULL}.}
 
 \item{\code{add_attrs}}{If \code{TRUE}, add "is_finished", "is_existed" and
 "levels" as the graph vertex attributes. Default: \code{FALSE}}
@@ -334,7 +335,7 @@ extracted.}
 
 \item{\code{from}}{The step to start the search to create the step dependencies
 graph. If \code{from} is specified, all steps reachable from the (from) step are
-extracted. only used when \code{to} argument is not specified.}
+extracted. only used when \code{to} argument is \code{NULL}.}
 
 \item{\code{layout}}{Gives the layout of the graphs.}
 
@@ -368,8 +369,8 @@ even it has been finished.}
 \item{\code{reset}}{A scalar logical value indicates whether we should label all
 downstream steps as unfinished.}
 
-\item{\code{envir}}{The environment in which to evaluate the \code{call} in the
-step.}
+\item{\code{envir}}{The environment in which to evaluate the \code{expression} in
+the step.}
 }
 \if{html}{\out{</div>}}
 }
@@ -400,8 +401,8 @@ even it has been finished.}
 \item{\code{reset}}{A scalar logical value indicates whether we should label all
 downstream steps as unfinished.}
 
-\item{\code{envir}}{The environment in which to evaluate the \code{call} in the
-step.}
+\item{\code{envir}}{The environment in which to evaluate the \code{expression} in
+the step.}
 }
 \if{html}{\out{</div>}}
 }

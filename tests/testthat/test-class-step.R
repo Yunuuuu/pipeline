@@ -9,9 +9,9 @@ test_that("`step` id argument works", {
     expect_s3_class(step("a", paste(1, 2)), "step")
 })
 
-test_that("`create_step` call argument works", {
-    expect_error(create_step("a", 2))
-    expect_s3_class(create_step("a", rlang::quo(1L)), "step")
+test_that("`create_step` expression argument works", {
+    expect_s3_class(create_step("a", 2), "step")
+    expect_s3_class(create_step("a", rlang::expr(a)), "step")
 })
 
 test_that("`step` deps argument works", {
@@ -52,7 +52,7 @@ test_that("`step` index works", {
     step1 <- step("a", paste(1, 2), seed = TRUE)
     expect_s3_class(step1, "step")
     expect_identical(step1$id, "a")
-    expect_true(rlang::is_quosure(step1$call))
+    expect_true(rlang::is_quosure(step1$expression))
     expect_true(step1$seed)
 
     step1$id <- "b"

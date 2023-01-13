@@ -398,9 +398,8 @@ Pipeline <- R6::R6Class("Pipeline",
 
         ## For the usage of asserting the public method arguments
         assert_ids_exist = function(ids, arg = rlang::caller_arg(ids), call = rlang::caller_env()) {
-            force(arg)
             missing_ids <- setdiff(ids, names(private$step_tree))
-            if (length(missing_id)) {
+            if (length(missing_ids)) {
                 cli::cli_abort(c(
                     "Provided {.arg {arg}} must exist in the {.var step_tree}",
                     x = "Missing ids: {.val {missing_ids}}"

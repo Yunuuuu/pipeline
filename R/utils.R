@@ -15,6 +15,7 @@ has_names <- function(x) {
 rlang::zap
 
 #' Report if an argument is a specific class
+#'
 #' @keywords internal
 #' @noRd
 assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
@@ -23,16 +24,23 @@ assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::calle
         message <- paste(message, "or {.code NULL}", sep = " ")
     }
     message <- sprintf("{.arg {arg}} must be a %s", message)
-    if (is.null(x)) {
-        if (!null_ok) {
+    # class sometimes can also contain the `NULL`, so we check is_class firstly
+    # if is_class(NULL) is TRUE, it will be okay for NULL
+    # Otherwise, the result is based on "null_ok" argument
+    if (!is_class(x)) {
+        # if a x is not the specified call
+        # it can be NULL or others
+        if (is.null(x)) {
+            if (null_ok) {
+                cli::cli_abort(c(message,
+                    "x" = "You've supplied a {.code NULL}"
+                ), call = call)
+            }
+        } else {
             cli::cli_abort(c(message,
-                "x" = "You've supplied a {.code NULL}"
+                "x" = "You've supplied a {.cls {class(x)}} object"
             ), call = call)
         }
-    } else if (!is_class(x)) {
-        cli::cli_abort(c(message,
-            "x" = "You've supplied a {.cls {class(x)}} object"
-        ), call = call)
     }
 }
 
@@ -105,7 +113,7 @@ rename <- function(x, replace) {
 #' @param x A list to modify
 #' @param replace A list used to replace (or add) value in the `x`
 #' @param restrict Only modify the giving items
-#' @noRd 
+#' @noRd
 modify_list <- function(x, replace, restrict = NULL) {
     replace_has_names <- has_names(replace)
     if (!all(replace_has_names)) {

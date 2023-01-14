@@ -43,7 +43,7 @@ assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::calle
 #' @noRd
 assert_length <- function(x, length, null_ok = FALSE, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
     length <- as.integer(length)
-    if (identical(length, 1L)) {
+    if (length == 1L) {
         message <- "{.field scalar} object"
     } else {
         message <- "length {.val {length}} object"
@@ -52,13 +52,14 @@ assert_length <- function(x, length, null_ok = FALSE, arg = rlang::caller_arg(x)
         message <- paste(message, "or {.code NULL}", sep = " ")
     }
     message <- sprintf("{.arg {arg}} must be a %s", message)
-    if (is.null(x) && !identical(length(x), length)) {
+    is_right_length <- rlang::has_length(x, length)
+    if (is.null(x) && !is_right_length) {
         if (!null_ok) {
             cli::cli_abort(c(message,
                 "x" = "You've supplied a {.code NULL}"
             ), call = call)
         }
-    } else if (!identical(length(x), length)) {
+    } else if (!is_right_length) {
         cli::cli_abort(c(message,
             "x" = "You've supplied a length {.val {length(x)}} object"
         ), call = call)

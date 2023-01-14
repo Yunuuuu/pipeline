@@ -98,7 +98,7 @@ Pipeline <- R6::R6Class("Pipeline",
         add_steps = function(..., reset = TRUE) {
             rlang::check_dots_unnamed()
             dots <- rlang::dots_list(..., .named = NULL)
-            if (identical(length(dots), 1L) && !is_step(dots[[1L]]) && is.list(dots[[1L]])) {
+            if (rlang::has_length(dots, 1L) && !is_step(dots[[1L]]) && is.list(dots[[1L]])) {
                 dots <- dots[[1L]]
             }
             for (i in seq_along(dots)) {
@@ -475,7 +475,7 @@ Pipeline <- R6::R6Class("Pipeline",
         },
         ### Build step dependencies network as an graph object
         build_step_graph = function(to = NULL, from = NULL, ids = NULL, add_attrs = FALSE) {
-            if (identical(length(private$step_tree), 0L)) {
+            if (!rlang::has_length(private$step_tree)) {
                 return(NULL)
             }
             step_list <- unclass(private$step_tree)

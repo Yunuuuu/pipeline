@@ -11,7 +11,7 @@
 step_tree <- function(...) {
     rlang::check_dots_unnamed()
     dots <- rlang::dots_list(..., .named = NULL)
-    if (identical(length(dots), 1L) && !is_step(dots[[1L]]) && is.list(dots[[1L]])) {
+    if (rlang::has_length(dots, 1L) && !is_step(dots[[1L]]) && is.list(dots[[1L]])) {
         dots <- dots[[1L]]
     }
     new_step_tree(dots)

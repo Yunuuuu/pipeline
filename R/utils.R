@@ -96,7 +96,7 @@ rename <- function(x, replace) {
     current_names <- names(x)
     old_names <- names(replace)
     missing_names <- setdiff(old_names, current_names)
-    if (length(missing_names) > 0L) {
+    if (length(missing_names)) {
         replace <- replace[!old_names %in% missing_names]
         old_names <- names(replace)
     }

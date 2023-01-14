@@ -214,7 +214,7 @@ define_step_levels <- function(ids = NULL, step_deps) {
                 deps <- step_deps[[id]]
                 # if dependency is NA, which means no dependencies, this
                 # indicates this step is the root, 1L should be returned.
-                if (rlang::has_length(deps, 1L) && is.na(deps)) {
+                if (length(deps) == 1L && is.na(deps)) {
                     value <- 1L
                 } else {
                     deps_levels <- vapply(deps, define_level, integer(1L),

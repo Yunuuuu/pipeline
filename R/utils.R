@@ -52,7 +52,7 @@ assert_length <- function(x, length, null_ok = FALSE, arg = rlang::caller_arg(x)
         message <- paste(message, "or {.code NULL}", sep = " ")
     }
     message <- sprintf("{.arg {arg}} must be a %s", message)
-    is_right_length <- rlang::has_length(x, length)
+    is_right_length <- length(x) == length
     if (is.null(x) && !is_right_length) {
         if (!null_ok) {
             cli::cli_abort(c(message,

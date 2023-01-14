@@ -290,7 +290,7 @@ step) as unfinished.}
 \subsection{Method \code{get_step_graph()}}{
 Build step dependencies network as an graph object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$get_step_graph(to = NULL, from = NULL, add_attrs = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$get_step_graph(to = NULL, from = NULL, ids = NULL, add_attrs = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -298,11 +298,17 @@ Build step dependencies network as an graph object
 \describe{
 \item{\code{to}}{The step to start the search to create the step dependencies graph.
 If \code{to} is specified, all steps from which the (to) step is reachable are
-extracted.}
+extracted. Only one or none of "to", "from", "ids" can be specified.}
 
 \item{\code{from}}{The step to start the search to create the step dependencies
 graph. If \code{from} is specified, all steps reachable from the (from) step are
-extracted. only used when \code{to} argument is \code{NULL}.}
+extracted. Only one or none of "to", "from", "ids" can be specified.}
+
+\item{\code{ids}}{Should be an atomic character, the steps used to form the step
+dependencies graph, this is passed into the \code{vids} argument of
+\link[igraph:subgraph]{subgraph}. Only one or none of "to", "from", "ids" can be
+specified. If all "ids", "from" and "to" arguments are \code{NULL}, the whole
+step_tree in the pipeline will be used to create the dependencies graph.}
 
 \item{\code{add_attrs}}{If \code{TRUE}, add "is_finished", "is_existed" and
 "levels" as the graph vertex attributes. Default: \code{FALSE}}
@@ -322,6 +328,7 @@ Plot the step dependencies tree.
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$plot_step_graph(
   to = NULL,
   from = NULL,
+  ids = NULL,
   layout = igraph::layout_as_tree,
   ...
 )}\if{html}{\out{</div>}}
@@ -332,11 +339,17 @@ Plot the step dependencies tree.
 \describe{
 \item{\code{to}}{The step to start the search to create the step dependencies graph.
 If \code{to} is specified, all steps from which the (to) step is reachable are
-extracted.}
+extracted. Only one or none of "to", "from", "ids" can be specified.}
 
 \item{\code{from}}{The step to start the search to create the step dependencies
 graph. If \code{from} is specified, all steps reachable from the (from) step are
-extracted. only used when \code{to} argument is \code{NULL}.}
+extracted. Only one or none of "to", "from", "ids" can be specified.}
+
+\item{\code{ids}}{Should be an atomic character, the steps used to form the step
+dependencies graph, this is passed into the \code{vids} argument of
+\link[igraph:subgraph]{subgraph}. Only one or none of "to", "from", "ids" can be
+specified. If all "ids", "from" and "to" arguments are \code{NULL}, the whole
+step_tree in the pipeline will be used to create the dependencies graph.}
 
 \item{\code{layout}}{Gives the layout of the graphs.}
 
@@ -396,7 +409,7 @@ Running the steps until the target step
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{targets}}{<\code{\link[tidyselect:language]{tidy-select}}>, A set of
-target steps until which to run.}
+targeted steps until which to run.}
 
 \item{\code{refresh}}{If \code{TRUE}, the step will be evaluated no matter wether the
 step has been finished or not. Otherwise the step will only be evaluated if

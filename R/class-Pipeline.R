@@ -17,10 +17,15 @@
 #'   provide as a list of steps directly.
 #' @param to The step to start the search to create the step dependencies graph.
 #'   If `to` is specified, all steps from which the (to) step is reachable are
-#'   extracted.
+#'   extracted. Only one or none of "to", "from", "ids" can be specified.
 #' @param from The step to start the search to create the step dependencies
 #'   graph. If `from` is specified, all steps reachable from the (from) step are
-#'   extracted. only used when `to` argument is `NULL`.
+#'   extracted. Only one or none of "to", "from", "ids" can be specified.
+#' @param ids Should be an atomic character, the steps used to form the step
+#' dependencies graph, this is passed into the `vids` argument of
+#' [subgraph][igraph::subgraph]. Only one or none of "to", "from", "ids" can be
+#' specified. If all "ids", "from" and "to" arguments are `NULL`, the whole
+#' step_tree in the pipeline will be used to create the dependencies graph.
 Pipeline <- R6::R6Class("Pipeline",
     public = list(
         #' @description
@@ -187,7 +192,7 @@ Pipeline <- R6::R6Class("Pipeline",
             step <- private$step_tree[[id]]
             if (!rlang::is_call(step$expression)) {
                 cli::cli_abort(c(
-                    "the expression of step {val {id}} must be a call object",
+                    "the expression of the step must be a {.cls call} object",
                     "x" = "You've supplied a step with a {.cls {typeof(step$expression)}} expression"
                 ))
             }
@@ -213,7 +218,7 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @param add_attrs If `TRUE`, add "is_finished", "is_existed" and
         #'   "levels" as the graph vertex attributes. Default: `FALSE`
         #' @return A igraph object.
-        get_step_graph = function(to = NULL, from = NULL, add_attrs = FALSE) {
+        get_step_graph = function(to = NULL, from = NULL, ids = NULL, add_attrs = FALSE) {
             # assert to argument
             assert_class(to, is.character, class = "character", null_ok = TRUE)
             assert_length(to, 1L, null_ok = TRUE)
@@ -230,9 +235,18 @@ Pipeline <- R6::R6Class("Pipeline",
                 private$assert_ids_exist(from)
             }
 
+            # assert ids argument
+            assert_class(ids, is.character,
+                class = "character", null_ok = TRUE
+            )
+            if (!is.null(ids)) {
+                private$assert_ids_exist(ids)
+            }
+
             # build step graph
             private$build_step_graph(
-                to = to, from = from, add_attrs = add_attrs
+                to = to, from = from, ids = ids,
+                add_attrs = add_attrs
             )
         },
 
@@ -240,9 +254,9 @@ Pipeline <- R6::R6Class("Pipeline",
         #'  Plot the step dependencies tree.
         #' @param layout Gives the layout of the graphs.
         #' @param ... Other arguments passed to [`plot`][igraph::plot.igraph].
-        plot_step_graph = function(to = NULL, from = NULL, layout = igraph::layout_as_tree, ...) {
+        plot_step_graph = function(to = NULL, from = NULL, ids = NULL, layout = igraph::layout_as_tree, ...) {
             step_graph <- self$get_step_graph(
-                to = to, from = from, add_attrs = TRUE
+                to = to, from = from, ids = ids, add_attrs = TRUE
             )
             plot(step_graph, layout = layout, ...)
         },
@@ -266,7 +280,7 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @description
         #' Running the steps until the target step
         #' @param targets <[`tidy-select`][tidyselect::language]>, A set of
-        #'   target steps until which to run.
+        #'   targeted steps until which to run.
         #' @param envir The environment in which to evaluate the `expression` in
         #'   the step.
         run_targets = function(targets = NULL, refresh = FALSE, reset = FALSE, envir = rlang::caller_env()) {
@@ -460,7 +474,7 @@ Pipeline <- R6::R6Class("Pipeline",
             result
         },
         ### Build step dependencies network as an graph object
-        build_step_graph = function(to = NULL, from = NULL, add_attrs = FALSE) {
+        build_step_graph = function(to = NULL, from = NULL, ids = NULL, add_attrs = FALSE) {
             if (identical(length(private$step_tree), 0L)) {
                 return(NULL)
             }
@@ -469,7 +483,7 @@ Pipeline <- R6::R6Class("Pipeline",
                 step_list,
                 add_attrs = add_attrs
             )
-            sub_step_graph(step_graph, to = to, from = from)
+            sub_step_graph(step_graph, to = to, from = from, ids = ids)
         }
     )
 )

@@ -81,28 +81,35 @@ quo_or_symbol <- function(x) {
     if (rlang::quo_is_missing(quo)) symbol else quo
 }
 
-sub_step_graph <- function(step_graph, to = NULL, from = NULL) {
-    if (is.null(to) && is.null(from)) {
+sub_step_graph <- function(step_graph, to = NULL, from = NULL, ids = NULL) {
+    args <- c("ids", "to", "from")
+    supplied_args <- args[
+        !vapply(list(ids, to, from),
+            is.null, logical(1L),
+            USE.NAMES = FALSE
+        )
+    ]
+    arg_len <- length(supplied_args)
+    if (identical(arg_len, 0L)) {
         return(step_graph)
+    } else if (arg_len > 1L) {
+        cli::cli_abort(c(
+            "Only one of {.arg {args}} or none can be supplied",
+            "i" = "You have supplied {arg_len}: {.arg {supplied_args}}"
+        ))
     } else {
-        if (!is.null(from) && !is.null(to)) {
-            cli::cli_warn(c(
-                "Both {.arg from} and {.arg to} are setted.",
-                "!" = "Will only use {.arg to}."
-            ))
-        }
-        if (!is.null(to)) {
-            graph_ids <- igraph::subcomponent(
+        ids <- switch(supplied_args,
+            ids = ids,
+            to = igraph::subcomponent(
                 step_graph,
                 v = to, mode = "in"
-            )
-        } else if (!is.null(from)) {
-            graph_ids <- igraph::subcomponent(
+            ),
+            from = igraph::subcomponent(
                 step_graph,
                 v = from, mode = "out"
             )
-        }
-        return(igraph::subgraph(step_graph, vids = graph_ids))
+        )
+        return(igraph::subgraph(step_graph, vids = ids))
     }
 }
 

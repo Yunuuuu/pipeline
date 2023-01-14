@@ -80,7 +80,7 @@ Pipeline <- R6::R6Class("Pipeline",
             }
             private$step_tree[[id]] <- step
             if (isTRUE(reset)) {
-                private$reset_downstream(id = id)
+                private$reset_downstream_internal(id = id)
             }
             invisible(self)
         },
@@ -114,7 +114,7 @@ Pipeline <- R6::R6Class("Pipeline",
             private$assert_ids_exist(ids)
             for (id in ids) {
                 if (isTRUE(reset)) {
-                    private$reset_downstream(id = id)
+                    private$reset_downstream_internal(id = id)
                 }
                 private$step_tree[[id]] <- NULL
             }
@@ -131,7 +131,7 @@ Pipeline <- R6::R6Class("Pipeline",
             private$assert_ids_exist(id)
             private$reset_step_internal(id = id)
             if (downstream) {
-                private$reset_downstream(id = id)
+                private$reset_downstream_internal(id = id)
             }
             invisible(self)
         },
@@ -169,7 +169,7 @@ Pipeline <- R6::R6Class("Pipeline",
             step <- validate_step(new_step(modify_list(unclass(step), dots)))
             private$step_tree[[id]] <- step
             if (isTRUE(reset)) {
-                private$reset_downstream(id = id)
+                private$reset_downstream_internal(id = id)
             }
             invisible(self)
         },
@@ -203,7 +203,7 @@ Pipeline <- R6::R6Class("Pipeline",
                 )
                 private$step_tree[[id]] <- step
                 if (isTRUE(reset)) {
-                    private$reset_downstream(id = id)
+                    private$reset_downstream_internal(id = id)
                 }
             }
             invisible(self)
@@ -417,7 +417,7 @@ Pipeline <- R6::R6Class("Pipeline",
         reset_step_internal = function(id) {
             private$step_tree[[id]]$finished <- FALSE
         },
-        reset_downstream = function(id) {
+        reset_downstream_internal = function(id) {
             downstream_steps <- private$build_step_graph(
                 from = id, add_attrs = FALSE
             )
@@ -455,7 +455,7 @@ Pipeline <- R6::R6Class("Pipeline",
             private$finish_step_internal(id)
 
             if (isTRUE(reset)) {
-                private$reset_downstream(id = id)
+                private$reset_downstream_internal(id = id)
             }
             result
         },

@@ -3,7 +3,7 @@
 
 # https://www.sciencedirect.com/science/article/pii/S153561082100115X
 # https://ars.els-cdn.com/content/image/1-s2.0-S153561082100115X-mmc1.pdf
-new_marker_set(
+to_marker_set(
     name = "Braun_2021",
     main = list(immune = "PTPRC", Epithelium = "EPCAM"),
     Immune = list(
@@ -39,7 +39,7 @@ new_marker_set(
     reference = "https://www.sciencedirect.com/science/article/pii/S153561082100115X"
 )
 
-new_marker_set(
+to_marker_set(
     name = "Luo_2022",
     main = list(
         Fibroblast = c("DCN", "COL1A1"),

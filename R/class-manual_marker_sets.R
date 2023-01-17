@@ -21,9 +21,13 @@ NULL
 #' @export
 #' @rdname manual_cms
 get_markers <- function(name) {
-    manual_cell_marker_datasets[[name]]
+    get(name, pos = manual_cell_marker_datasets, inherits = FALSE)
 }
 
+to_marker_set <- function(name, ..., reference) {
+    x <- marker_set(..., reference = reference)
+    add_marker_set(name = name, marker_set = x)
+}
 
 #' @export
 #' @rdname manual_cms
@@ -38,27 +42,35 @@ print.manual_cms <- function(x, ...) {
 }
 
 manual_cell_marker_datasets <- structure(
-    rlang::new_environment(),
+    new.env(parent = emptyenv()),
     class = "manual_cms"
 )
 
+marker_set <- function(..., reference) {
+    x <- rlang::list2(...) # nolint
+    x <- new_marker_set(x, reference = reference)
+    validate_marker_set(x)
+    x
+}
+
+new_marker_set <- function(list, reference) {
+    stopifnot(is.list(list))
+    structure(
+        list,
+        class = "marker_set",
+        reference = reference
+    )
+}
+
 # convention: name should be the surname of the first author followed by the
 # years of the published article connected with "_"
-new_marker_set <- function(name, ..., reference) { # nolint styler: off
-    marker_set <- rlang::list2(...)
-    # every elements in ... should be named
-    validate_marker_set(marker_set)
-
-    if (rlang::env_has(manual_cell_marker_datasets, nms = name)) {
+add_marker_set <- function(name, marker_set) {
+    if (exists(name, where = manual_cell_marker_datasets, inherits = FALSE)) {
         cli::cli_abort("Existed cell marker set found in datasets")
     }
-    rlang::env_bind(
-        .env = manual_cell_marker_datasets,
-        !!name := structure(
-            marker_set,
-            class = "marker_set",
-            reference = reference
-        )
+    assign(
+        x = name, value = marker_set,
+        pos = manual_cell_marker_datasets
     )
 }
 

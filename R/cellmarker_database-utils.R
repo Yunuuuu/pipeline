@@ -44,7 +44,7 @@ cellmarker_search <- function(markers, species = "human", internal = NULL) {
 cellmarker_get <- function(species = "human", internal = NULL) {
     species <- match.arg(species, c("human", "mouse"))
     if (is.null(internal)) {
-        if (rlang::env_has(cellmarker_database_external, nms = species)) {
+        if (exists(species, envir = cellmarker_database_external, inherits = FALSE)) {
             internal <- FALSE
         } else {
             internal <- TRUE
@@ -78,15 +78,15 @@ cellmarker_prepare <- function(data) { # nolint styler: off
 }
 
 cellmarker_download <- function(species) {
-    if (!rlang::env_has(cellmarker_database_external, nms = species)) {
+    if (!exists(species, envir = cellmarker_database_external, inherits = FALSE)) {
         data_link <- switch(species,
             human = "http://xteam.xbio.top/CellMarker/download/Human_cell_markers.txt",
             mouse = "http://xteam.xbio.top/CellMarker/download/Mouse_cell_markers.txt"
         )
         cli::cli_alert_info("Reading data from {.url {data_link}}")
-        rlang::env_bind(
-            cellmarker_database_external,
-            !!species := cellmarker_prepare(data.table::fread(data_link))
+        assign(
+            species, cellmarker_prepare(data.table::fread(data_link)),
+            pos = cellmarker_database_external
         )
         # envir <- topenv(environment(NULL))
         # unlockBinding("cellmarker_database_external", envir)
@@ -96,13 +96,13 @@ cellmarker_download <- function(species) {
         # )
         # lockBinding("cellmarker_database_external", envir)
     }
-    rlang::env_get(cellmarker_database_external, nm = species)
+    get(species, pos = cellmarker_database_external, inherits = FALSE)
 }
 
 # cellmarker_database_external <- list(
 #     human = NULL, mouse = NULL
 # )
-cellmarker_database_external <- rlang::new_environment()
+cellmarker_database_external <- new.env(parent = emptyenv())
 cellmarker_gene_cols <- c(
     "cellMarker", "geneSymbol", "geneID", "proteinName", "proteinID"
 )

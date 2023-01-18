@@ -35,9 +35,9 @@ Pipeline <- R6::R6Class("Pipeline",
         #'   can also use `$env_bind` method to add new variable.
         #' @return A new `Pipeline` object.
         initialize = function(..., data = list()) {
-            private$envir <- rlang::new_environment(data = data)
+            private$envir <- new.env(parent = emptyenv())
+            private$env_bind_internal(!!!data)
             self$set_step_tree(...)
-            invisible(self)
         },
 
         #' @description
@@ -267,7 +267,7 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @param id Name of the step object.
         #' @param envir The environment in which to evaluate the `expression` in
         #'   the step.
-        run_step = function(id, refresh = FALSE, reset = FALSE, envir = rlang::caller_env()) {
+        run_step = function(id, refresh = FALSE, reset = FALSE, envir = caller_env()) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
             private$assert_ids_exist(id)
@@ -283,7 +283,7 @@ Pipeline <- R6::R6Class("Pipeline",
         #'   targeted steps until which to run.
         #' @param envir The environment in which to evaluate the `expression` in
         #'   the step.
-        run_targets = function(targets = NULL, refresh = FALSE, reset = FALSE, envir = rlang::caller_env()) {
+        run_targets = function(targets = NULL, refresh = FALSE, reset = FALSE, envir = caller_env()) {
             # build dependencies graph
             step_graph <- private$build_step_graph(add_attrs = TRUE)
             attrs <- igraph::vertex_attr(step_graph)[c("name", "levels")]
@@ -361,27 +361,27 @@ Pipeline <- R6::R6Class("Pipeline",
         #' Get single variable from the environment
         #' @param nm Name of binding, a string.
         env_get = function(nm) {
-            rlang::env_get(env = private$envir, nm = nm, inherit = FALSE)
+            get(nm, pos = private$envir, inherits = FALSE)
         },
         #' @description
         #' Get multiple variable from the environment
         #' @param nms Names of bindings, a character vector.
         env_get_list = function(nms) {
-            rlang::env_get_list(env = private$envir, nms = nms, inherit = FALSE)
+            mget(nms, envir = private$envir, inherits = FALSE)
         },
         #' @description
         #' Bind symbols to object in the attached environment.
         #' @param ... <[`dynamic-dots`][rlang::dyn-dots]>, Named objects
         #'   (env_bind()). Use zap() to remove bindings.
         env_bind = function(...) {
-            rlang::env_bind(.env = private$envir, ...)
+            private$env_bind_internal(...)
             invisible(self)
         },
         #' @description
         #' Remove bindings from the attached environment.
         #' @param nms A character vector of binding names to remove.
         env_unbind = function(nms) {
-            rlang::env_unbind(.env = private$envir, nms = nms)
+            rm(list = nms, pos = private$envir, inherits = FALSE)
             invisible(self)
         },
         #' @description
@@ -396,12 +396,12 @@ Pipeline <- R6::R6Class("Pipeline",
                     "Provided {.arg variable} must be defused as a simple {.cls symbol}."
                 )
             }
-            self$env_bind(!!nm := rlang::eval_tidy(variable))
-            rlang::env_unbind(rlang::quo_get_env(variable), nms = nm)
+            private$env_bind_internal(!!nm := rlang::eval_tidy(variable))
+            rm(list = nm, pos = rlang::quo_get_env(variable), inherits = FALSE)
             invisible(self)
         },
         #' @description Names of symbols bound in the attached environment
-        env_names = function() rlang::env_names(private$envir)
+        env_names = function() ls(pos = private$envir, all.names = TRUE)
     ),
 
     # all object used to run step command should live in `envir`
@@ -411,7 +411,7 @@ Pipeline <- R6::R6Class("Pipeline",
         step_tree = NULL, envir = NULL,
 
         ## For the usage of asserting the public method arguments
-        assert_ids_exist = function(ids, arg = rlang::caller_arg(ids), call = rlang::caller_env()) {
+        assert_ids_exist = function(ids, arg = rlang::caller_arg(ids), call = caller_env()) {
             missing_ids <- setdiff(ids, names(private$step_tree))
             if (length(missing_ids)) {
                 cli::cli_abort(c(
@@ -419,6 +419,14 @@ Pipeline <- R6::R6Class("Pipeline",
                     x = "Missing ids: {.val {missing_ids}}"
                 ), call = call)
             }
+        },
+
+        ## environmetn utils
+        env_bind_internal = function(...) {
+            rlang::env_bind(.env = private$envir, ...)
+        },
+        env_unbind_internal = function(nms) {
+            rm(list = nms, pos = private$envir, inherits = FALSE)
         },
 
         ## step utils
@@ -444,13 +452,13 @@ Pipeline <- R6::R6Class("Pipeline",
         },
 
         ### run the step and return the result
-        run_step_internal = function(id, refresh = FALSE, reset = FALSE, envir = rlang::caller_env()) {
+        run_step_internal = function(id, refresh = FALSE, reset = FALSE, envir = caller_env()) {
             step <- private$step_tree[[id]]
             # if this step has been finished, and refresh is FALSE
             # Just return the value from the environment
             if (step$finished && !isTRUE(refresh)) {
                 if (step$return) {
-                    return(rlang::env_get(private$envir, nm = id))
+                    return(self$env_get(id))
                 } else {
                     return(NULL)
                 }
@@ -462,7 +470,7 @@ Pipeline <- R6::R6Class("Pipeline",
             )
 
             if (step$return) {
-                self$env_bind(!!id := result)
+                private$env_bind_internal(!!id := result)
             } else {
                 result <- NULL
             }

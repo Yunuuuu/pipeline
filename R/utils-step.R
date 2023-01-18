@@ -5,7 +5,7 @@
 #' @param pipeline The pipeline object.
 #' @param envir The environment in which to evaluate step.
 #' @noRd
-eval_step <- function(step, mask, pipeline = NULL, envir = rlang::caller_env()) {
+eval_step <- function(step, mask, pipeline = NULL, envir = caller_env()) {
     # if there is any seed, we set seed and then restore the existed seed in the
     # globalenv()
     if (isTRUE(step$seed) || rlang::is_scalar_integer(step$seed) || rlang::is_scalar_double(step$seed)) {
@@ -19,11 +19,14 @@ eval_step <- function(step, mask, pipeline = NULL, envir = rlang::caller_env()) 
         }
         old_seed <- rlang::env_get(globalenv(), ".Random.seed", default = NULL)
         if (is.null(old_seed)) {
-            on.exit(rm(".Random.seed", envir = globalenv()))
+            on.exit(rm(
+                list = ".Random.seed", envir = globalenv(), inherits = FALSE
+            ))
         } else {
-            on.exit(
-                rlang::env_bind(globalenv(), .Random.seed = old_seed)
-            )
+            on.exit(assign(
+                x = ".Random.seed", value = old_seed, pos = globalenv(),
+                inherits = FALSE
+            ))
         }
         set.seed(seed)
     }
@@ -73,12 +76,12 @@ build_step <- function(id, expression, step_param, default,
 #' a symbol of the argument name.
 #' @noRd
 quo_or_symbol <- function(x) {
-    symbol <- substitute(x)
-    quo <- rlang::eval_bare(
-        rlang::expr(rlang::enquo(!!symbol)),
+    x_symbol <- substitute(x)
+    x_quo <- rlang::eval_bare(
+        rlang::expr(rlang::enquo(!!x_symbol)),
         env = rlang::caller_env()
     )
-    if (rlang::quo_is_missing(quo)) symbol else quo
+    if (rlang::quo_is_missing(x_quo)) x_symbol else x_quo
 }
 
 sub_step_graph <- function(step_graph, to = NULL, from = NULL, ids = NULL) {
@@ -169,7 +172,7 @@ add_step_graph_attrs <- function(step_graph, step_list, step_deps) {
         step_graph <- igraph::set_vertex_attr(
             step_graph,
             name = attr,
-            value = rlang::env_get(rlang::current_env(), nm = attr)
+            value = get(x = attr, pos = environment(), inherits = FALSE)
         )
     }
     step_graph

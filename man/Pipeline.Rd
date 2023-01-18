@@ -364,12 +364,7 @@ step_tree in the pipeline will be used to create the dependencies graph.}
 \subsection{Method \code{run_step()}}{
 Running the step
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_step(
-  id,
-  refresh = FALSE,
-  reset = FALSE,
-  envir = rlang::caller_env()
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_step(id, refresh = FALSE, reset = FALSE, envir = caller_env())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -401,7 +396,7 @@ Running the steps until the target step
   targets = NULL,
   refresh = FALSE,
   reset = FALSE,
-  envir = rlang::caller_env()
+  envir = caller_env()
 )}\if{html}{\out{</div>}}
 }
 

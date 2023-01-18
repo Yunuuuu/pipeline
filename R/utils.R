@@ -18,7 +18,7 @@ rlang::zap
 #'
 #' @keywords internal
 #' @noRd
-assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
+assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::caller_arg(x), call = caller_env()) {
     message <- "{.cls {class}} object"
     if (null_ok) {
         message <- paste(message, "or {.code NULL}", sep = " ")
@@ -41,7 +41,7 @@ assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::calle
 #' Report if an argument has specific length
 #' @keywords internal
 #' @noRd
-assert_length <- function(x, length, null_ok = FALSE, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
+assert_length <- function(x, length, null_ok = FALSE, arg = rlang::caller_arg(x), call = caller_env()) {
     length <- as.integer(length)
     if (length == 1L) {
         message <- "{.field scalar} object"
@@ -121,7 +121,7 @@ modify_list <- function(x, replace) {
     x
 }
 
-check_dots_named <- function(..., call = rlang::caller_env()) {
+check_dots_named <- function(..., call = caller_env()) {
     dots <- rlang::dots_list(..., .named = NULL, .homonyms = "error")
     if (!all(has_names(dots))) {
         cli::cli_abort(
@@ -133,7 +133,7 @@ check_dots_named <- function(..., call = rlang::caller_env()) {
 }
 
 # call object utils ----------------------------------------
-call_standardise <- function(call, env = rlang::caller_env()) {
+call_standardise <- function(call, env = caller_env()) {
     expr <- rlang::get_expr(call)
     env <- rlang::get_env(call, env)
     fn <- rlang::eval_bare(rlang::node_car(expr), env)
@@ -171,16 +171,12 @@ change_expr <- function(expr, from, to) {
         symbol = if (identical(expr, from)) to else expr,
 
         # Recursive cases
-        call = list_to_call(lapply(expr, change_expr, from = from, to = to)),
+        call = as.call(lapply(expr, change_expr, from = from, to = to)),
         pairlist = rlang::pairlist2(
             !!!lapply(expr, change_expr, from = from, to = to)
         ),
         cli::cli_abort("Don't know how to handle type {.cls {expr_type(expr)}}")
     )
-}
-
-list_to_call <- function(x) {
-    rlang::call2(x[[1L]], !!!x[-1L])
 }
 
 expr_type <- function(x) {

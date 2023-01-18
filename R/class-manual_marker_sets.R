@@ -47,7 +47,7 @@ manual_cell_marker_datasets <- structure(
 )
 
 marker_set <- function(..., reference) {
-    x <- rlang::list2(...) # nolint
+    x <- rlang::dots_list(..., .named = NULL, .homonyms = "error")
     x <- new_marker_set(x, reference = reference)
     validate_marker_set(x)
     x

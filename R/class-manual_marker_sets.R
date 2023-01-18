@@ -68,10 +68,7 @@ add_marker_set <- function(name, marker_set) {
     if (exists(name, where = manual_cell_marker_datasets, inherits = FALSE)) {
         cli::cli_abort("Existed cell marker set found in datasets")
     }
-    assign(
-        x = name, value = marker_set,
-        pos = manual_cell_marker_datasets
-    )
+    manual_cell_marker_datasets[[name]] <- marker_set
 }
 
 #' @export

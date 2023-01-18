@@ -84,9 +84,8 @@ cellmarker_download <- function(species) {
             mouse = "http://xteam.xbio.top/CellMarker/download/Mouse_cell_markers.txt"
         )
         cli::cli_alert_info("Reading data from {.url {data_link}}")
-        assign(
-            species, cellmarker_prepare(data.table::fread(data_link)),
-            pos = cellmarker_database_external
+        cellmarker_database_external[[species]] <- cellmarker_prepare(
+            data.table::fread(data_link)
         )
         # envir <- topenv(environment(NULL))
         # unlockBinding("cellmarker_database_external", envir)

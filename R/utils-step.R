@@ -117,7 +117,7 @@ sub_step_graph <- function(step_graph, to = NULL, from = NULL, ids = NULL) {
 }
 
 build_step_graph_helper <- function(step_list, add_attrs = FALSE) {
-    if (length(step_list)) return(igraph::make_empty_graph(directed = TRUE))
+    if (!length(step_list)) return(igraph::make_empty_graph(directed = TRUE))
     step_deps <- lapply(step_list, function(x) {
         deps <- x[["deps"]]
         if (!length(deps) || all(is.na(deps) | deps == "")) {

@@ -125,7 +125,7 @@ check_dots_named <- function(..., call = caller_env()) {
     dots <- rlang::dots_list(..., .named = NULL, .homonyms = "error")
     if (!all(has_names(dots))) {
         cli::cli_abort(
-            "All items in {.arg ...} must be named",
+            "All elements in {.arg ...} must be named",
             call = call
         )
     }
@@ -193,6 +193,24 @@ expr_type <- function(x) {
     } else {
         typeof(x)
     }
+}
+
+# environment helper
+# Wrapper around list2env with a NULL check. In R <3.2.0, if an empty unnamed
+# list is passed to list2env(), it errors. But an empty named list is OK. For
+# R >=3.2.0, this wrapper is not necessary.
+# @param empty_to_null Controls what to do when x is NULL or empty list.
+#   If TRUE, return NULL. If FALSE, return an empty list.
+list2env2 <- function(x, envir = NULL, parent = emptyenv(),
+                      hash = (length(x) > 100),
+                      size = max(29L, length(x))) {
+    if (is.null(envir)) {
+        envir <- new.env(hash = hash, parent = parent, size = size)
+    }
+    if (length(x) == 0L) {
+        return(envir)
+    }
+    list2env(x, envir)
 }
 
 # cli output helper

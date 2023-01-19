@@ -84,7 +84,9 @@ quo_or_symbol <- function(x) {
     if (rlang::quo_is_missing(x_quo)) x_symbol else x_quo
 }
 
-sub_step_graph <- function(step_graph, to = NULL, from = NULL, ids = NULL) {
+#' @keywords internal
+#' @noRd 
+sub_step_graph_helper <- function(step_graph, to = NULL, from = NULL, ids = NULL) {
     args <- c("ids", "to", "from")
     supplied_args <- args[
         !vapply(list(ids, to, from),
@@ -116,6 +118,8 @@ sub_step_graph <- function(step_graph, to = NULL, from = NULL, ids = NULL) {
     }
 }
 
+#' @keywords internal
+#' @noRd 
 build_step_graph_helper <- function(step_list, add_attrs = FALSE) {
     if (!length(step_list)) return(igraph::make_empty_graph(directed = TRUE))
     step_deps <- lapply(step_list, function(x) {

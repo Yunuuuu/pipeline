@@ -112,10 +112,10 @@ print.marker_set <- function(x, ...) {
 
 validate_marker_set <- function(x) {
     x_type <- typeof(x)
-    if (identical(x_type, "character")) {
+    if (x_type == "character") {
         # No need names for character
         is_right <- TRUE
-    } else if (identical(x_type, "list")) {
+    } else if (x_type == "list") {
         # for a list, we should check all elements have names,
         # and then recall this function to check every elments
         is_right <- all(has_names(x)) &&
@@ -132,9 +132,9 @@ validate_marker_set <- function(x) {
 wrap_cat <- function(label, items, sep = ": ", collapse = ", ", indent = 0L, exdent = 2L) {
     total <- length(items)
 
-    ext <- if (identical(total, 0L)) {
+    ext <- if (total == 0L) {
         "none"
-    } else if (identical(total, 1L)) {
+    } else if (total == 1L) {
         items
     } else if (total <= 6L) {
         paste(

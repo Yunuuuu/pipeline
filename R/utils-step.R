@@ -93,7 +93,7 @@ sub_step_graph <- function(step_graph, to = NULL, from = NULL, ids = NULL) {
         )
     ]
     arg_len <- length(supplied_args)
-    if (identical(arg_len, 0L)) {
+    if (arg_len == 0L) {
         return(step_graph)
     } else if (arg_len > 1L) {
         cli::cli_abort(c(

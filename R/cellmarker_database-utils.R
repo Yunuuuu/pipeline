@@ -44,7 +44,7 @@ cellmarker_search <- function(markers, species = "human", internal = NULL) {
 cellmarker_get <- function(species = "human", internal = NULL) {
     species <- match.arg(species, c("human", "mouse"))
     if (is.null(internal)) {
-        if (exists(species, envir = cellmarker_database_external, inherits = FALSE)) {
+        if (exists(species, where = cellmarker_database_external, inherits = FALSE)) {
             internal <- FALSE
         } else {
             internal <- TRUE
@@ -78,7 +78,7 @@ cellmarker_prepare <- function(data) { # nolint styler: off
 }
 
 cellmarker_download <- function(species) {
-    if (!exists(species, envir = cellmarker_database_external, inherits = FALSE)) {
+    if (!exists(species, where = cellmarker_database_external, inherits = FALSE)) {
         data_link <- switch(species,
             human = "http://xteam.xbio.top/CellMarker/download/Human_cell_markers.txt",
             mouse = "http://xteam.xbio.top/CellMarker/download/Mouse_cell_markers.txt"

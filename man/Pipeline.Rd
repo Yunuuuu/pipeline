@@ -4,7 +4,7 @@
 \alias{Pipeline}
 \title{R6 Class Representing Pipeline}
 \description{
-A Pipeline object, which is bound with a step_tree and a
+A Pipeline object, which is bound with a step_collections and a
 environment, provides methods to run the steps in the attached environment.
 In this way, we can bind all steps used in a pipeline and their dependant
 evaluation frame in a object.
@@ -13,14 +13,13 @@ evaluation frame in a object.
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-Pipeline-new}{\code{Pipeline$new()}}
-\item \href{#method-Pipeline-set_step_tree}{\code{Pipeline$set_step_tree()}}
+\item \href{#method-Pipeline-set_step_collections}{\code{Pipeline$set_step_collections()}}
 \item \href{#method-Pipeline-get_step}{\code{Pipeline$get_step()}}
-\item \href{#method-Pipeline-get_steps}{\code{Pipeline$get_steps()}}
-\item \href{#method-Pipeline-add_step}{\code{Pipeline$add_step()}}
+\item \href{#method-Pipeline-get_step_list}{\code{Pipeline$get_step_list()}}
 \item \href{#method-Pipeline-add_steps}{\code{Pipeline$add_steps()}}
 \item \href{#method-Pipeline-remove_steps}{\code{Pipeline$remove_steps()}}
-\item \href{#method-Pipeline-reset_step}{\code{Pipeline$reset_step()}}
-\item \href{#method-Pipeline-reset_step_tree}{\code{Pipeline$reset_step_tree()}}
+\item \href{#method-Pipeline-reset_steps}{\code{Pipeline$reset_steps()}}
+\item \href{#method-Pipeline-reset_step_collections}{\code{Pipeline$reset_step_collections()}}
 \item \href{#method-Pipeline-finish_step}{\code{Pipeline$finish_step()}}
 \item \href{#method-Pipeline-modify_step}{\code{Pipeline$modify_step()}}
 \item \href{#method-Pipeline-modify_call}{\code{Pipeline$modify_call()}}
@@ -50,8 +49,9 @@ Create a new person object.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be a \code{step}
-object without name. steps must be unique with no duplicated ids. Can also
-provide as a list of steps directly.}
+object. Names won't make any sense. Any duplicated steps (with duplicated
+id) are only included once, the latter one will override the former. Can
+also provide as a list of steps directly.}
 
 \item{\code{data}}{A data list to build the attached environment which is
 used to evaluate the variable in the step expression object. One
@@ -64,20 +64,21 @@ A new \code{Pipeline} object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Pipeline-set_step_tree"></a>}}
-\if{latex}{\out{\hypertarget{method-Pipeline-set_step_tree}{}}}
-\subsection{Method \code{set_step_tree()}}{
+\if{html}{\out{<a id="method-Pipeline-set_step_collections"></a>}}
+\if{latex}{\out{\hypertarget{method-Pipeline-set_step_collections}{}}}
+\subsection{Method \code{set_step_collections()}}{
 Set the step tree in the \code{Pipeline} object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$set_step_tree(...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$set_step_collections(...)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be a \code{step}
-object without name. steps must be unique with no duplicated ids. Can also
-provide as a list of steps directly.}
+object. Names won't make any sense. Any duplicated steps (with duplicated
+id) are only included once, the latter one will override the former. Can
+also provide as a list of steps directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -86,7 +87,7 @@ provide as a list of steps directly.}
 \if{html}{\out{<a id="method-Pipeline-get_step"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-get_step}{}}}
 \subsection{Method \code{get_step()}}{
-Get a single step in the \code{Pipeline} step_tree.
+Get a single step in the \code{Pipeline} step_collections.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$get_step(id)}\if{html}{\out{</div>}}
 }
@@ -103,51 +104,31 @@ A step object.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Pipeline-get_steps"></a>}}
-\if{latex}{\out{\hypertarget{method-Pipeline-get_steps}{}}}
-\subsection{Method \code{get_steps()}}{
-Get multiple steps in the \code{Pipeline} step_tree.
+\if{html}{\out{<a id="method-Pipeline-get_step_list"></a>}}
+\if{latex}{\out{\hypertarget{method-Pipeline-get_step_list}{}}}
+\subsection{Method \code{get_step_list()}}{
+Get multiple steps in the \code{Pipeline} step_collections.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$get_steps(ids = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$get_step_list(ids = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{ids}}{A atomic character of the step name. if \code{NULL}, all steps
+\item{\code{ids}}{An atomic character of the step name. if \code{NULL}, all steps
 will be extracted.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A step_tree object.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Pipeline-add_step"></a>}}
-\if{latex}{\out{\hypertarget{method-Pipeline-add_step}{}}}
-\subsection{Method \code{add_step()}}{
-Add a new step in the \code{Pipeline} step_tree.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$add_step(step, reset = TRUE)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{step}}{A \link{step} object.}
-
-\item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
-step) as unfinished.}
-}
-\if{html}{\out{</div>}}
+A list of step object.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Pipeline-add_steps"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-add_steps}{}}}
 \subsection{Method \code{add_steps()}}{
-Add new steps in the \code{Pipeline} step_tree.
+Add new steps in the \code{Pipeline} step_collections.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$add_steps(..., reset = TRUE)}\if{html}{\out{</div>}}
 }
@@ -155,10 +136,10 @@ Add new steps in the \code{Pipeline} step_tree.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be a
-\code{step} object without name. Any duplicated steps (with duplicated
-id) are only included once, the latter one will override the
-former. Can also provide as a list of steps directly.}
+\item{\code{...}}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}> all items must be a \code{step}
+object. Names won't make any sense. Any duplicated steps (with duplicated
+id) are only included once, the latter one will override the former. Can
+also provide as a list of steps directly.}
 
 \item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
 step) as unfinished.}
@@ -170,7 +151,7 @@ step) as unfinished.}
 \if{html}{\out{<a id="method-Pipeline-remove_steps"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-remove_steps}{}}}
 \subsection{Method \code{remove_steps()}}{
-Remove steps in the \code{Pipeline} step_tree.
+Remove steps in the \code{Pipeline} step_collections.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$remove_steps(ids, reset = TRUE)}\if{html}{\out{</div>}}
 }
@@ -188,19 +169,19 @@ step) as unfinished.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Pipeline-reset_step"></a>}}
-\if{latex}{\out{\hypertarget{method-Pipeline-reset_step}{}}}
-\subsection{Method \code{reset_step()}}{
+\if{html}{\out{<a id="method-Pipeline-reset_steps"></a>}}
+\if{latex}{\out{\hypertarget{method-Pipeline-reset_steps}{}}}
+\subsection{Method \code{reset_steps()}}{
 Label the step as unfinished. If downstream is \code{TRUE},
 will also label all steps depending on this step as unfinished.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$reset_step(id, downstream = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$reset_steps(ids, downstream = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{id}}{A scalar character of the step name.}
+\item{\code{ids}}{An atomic character, the steps to reset.}
 
 \item{\code{downstream}}{If \code{TRUE}, will label all downstream steps (depend
 on current step) as unfinished.}
@@ -209,12 +190,11 @@ on current step) as unfinished.}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Pipeline-reset_step_tree"></a>}}
-\if{latex}{\out{\hypertarget{method-Pipeline-reset_step_tree}{}}}
-\subsection{Method \code{reset_step_tree()}}{
-Label all steps in the step_tree as unfinished.
+\if{html}{\out{<a id="method-Pipeline-reset_step_collections"></a>}}
+\if{latex}{\out{\hypertarget{method-Pipeline-reset_step_collections}{}}}
+\subsection{Method \code{reset_step_collections()}}{
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$reset_step_tree()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$reset_step_collections()}\if{html}{\out{</div>}}
 }
 
 }
@@ -308,7 +288,8 @@ extracted. Only one or none of "to", "from", "ids" can be specified.}
 dependencies graph, this is passed into the \code{vids} argument of
 \link[igraph:subgraph]{subgraph}. Only one or none of "to", "from", "ids" can be
 specified. If all "ids", "from" and "to" arguments are \code{NULL}, the whole
-step_tree in the pipeline will be used to create the dependencies graph.}
+step_collections in the pipeline will be used to create the dependencies
+graph.}
 
 \item{\code{add_attrs}}{If \code{TRUE}, add "is_finished", "is_existed" and
 "levels" as the graph vertex attributes. Default: \code{FALSE}}
@@ -349,7 +330,8 @@ extracted. Only one or none of "to", "from", "ids" can be specified.}
 dependencies graph, this is passed into the \code{vids} argument of
 \link[igraph:subgraph]{subgraph}. Only one or none of "to", "from", "ids" can be
 specified. If all "ids", "from" and "to" arguments are \code{NULL}, the whole
-step_tree in the pipeline will be used to create the dependencies graph.}
+step_collections in the pipeline will be used to create the dependencies
+graph.}
 
 \item{\code{layout}}{Gives the layout of the graphs.}
 
@@ -364,21 +346,18 @@ step_tree in the pipeline will be used to create the dependencies graph.}
 \subsection{Method \code{run_step()}}{
 Running the step
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_step(id, refresh = FALSE, reset = FALSE, envir = caller_env())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_step(id, refresh = FALSE, envir = caller_env())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{id}}{Name of the step object.}
+\item{\code{id}}{A scalar character of the step name.}
 
 \item{\code{refresh}}{If \code{TRUE}, the step will be evaluated no matter wether the
 step has been finished or not. Otherwise the step will only be evaluated if
 it has never been evaluated once, in which case, the result will be obtained
 directly from the last evaluated result.}
-
-\item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
-step) as unfinished.}
 
 \item{\code{envir}}{The environment in which to evaluate the \code{expression} in
 the step.}
@@ -392,12 +371,7 @@ the step.}
 \subsection{Method \code{run_targets()}}{
 Running the steps until the target step
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_targets(
-  targets = NULL,
-  refresh = FALSE,
-  reset = FALSE,
-  envir = caller_env()
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_targets(targets = NULL, refresh = FALSE, envir = caller_env())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -410,9 +384,6 @@ targeted steps until which to run.}
 step has been finished or not. Otherwise the step will only be evaluated if
 it has never been evaluated once, in which case, the result will be obtained
 directly from the last evaluated result.}
-
-\item{\code{reset}}{If \code{TRUE}, will label all downstream steps (depend on current
-step) as unfinished.}
 
 \item{\code{envir}}{The environment in which to evaluate the \code{expression} in
 the step.}

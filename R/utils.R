@@ -172,9 +172,7 @@ change_expr <- function(expr, from, to) {
 
         # Recursive cases
         call = as.call(lapply(expr, change_expr, from = from, to = to)),
-        pairlist = rlang::pairlist2(
-            !!!lapply(expr, change_expr, from = from, to = to)
-        ),
+        pairlist = as.pairlist(lapply(expr, change_expr, from = from, to = to)),
         cli::cli_abort("Don't know how to handle type {.cls {expr_type(expr)}}")
     )
 }

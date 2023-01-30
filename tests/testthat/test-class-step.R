@@ -52,7 +52,7 @@ test_that("`step` index works", {
     step1 <- step("a", paste(1, 2), seed = TRUE)
     expect_s3_class(step1, "step")
     expect_identical(step1$id, "a")
-    expect_true(rlang::is_quosure(step1$expression))
+    expect_true(rlang::is_quosure(step1$expr))
     expect_true(step1$seed)
 
     step1$id <- "b"

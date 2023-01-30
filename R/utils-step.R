@@ -8,10 +8,10 @@
 eval_step <- function(step, mask, pipeline = NULL, envir = caller_env()) {
     # if there is any seed, we set seed and then restore the existed seed in the
     # globalenv()
-    if (isTRUE(step$seed) || rlang::is_scalar_integer(step$seed) || rlang::is_scalar_double(step$seed)) {
+    if (isTRUE(step$seed) || is.numeric(step$seed)) {
         if (isTRUE(step$seed)) {
             seed <- digest::digest2int(
-                digest::digest(step$expression, "crc32"),
+                digest::digest(step$expr, "crc32"),
                 seed = 0L
             )
         } else {
@@ -48,14 +48,14 @@ eval_step <- function(step, mask, pipeline = NULL, envir = caller_env()) {
     mask$.step <- rlang::as_data_pronoun(other_items)
 
     # then we run the command attached with this step
-    rlang::eval_tidy(step$expression, data = mask, env = envir)
+    rlang::eval_tidy(step$expr, data = mask, env = envir)
 }
 
 #' @param step_param User provided step components to modify the default step
 #' items.
 #' @param default The default components for this step.
 #' @noRd
-build_step <- function(id, expression, step_param, default,
+build_step <- function(id, expr, step_param, default,
                        arg = rlang::caller_arg(step_param),
                        call = rlang::caller_env()) {
     if (!all(has_names(step_param))) {
@@ -66,7 +66,7 @@ build_step <- function(id, expression, step_param, default,
     }
     step_param <- modify_list(default, step_param)
     rlang::inject(create_step(
-        id = id, expression = expression,
+        id = id, expr = expr,
         !!!step_param
     ))
 }
@@ -85,7 +85,7 @@ quo_or_symbol <- function(x) {
 }
 
 #' @keywords internal
-#' @noRd 
+#' @noRd
 sub_step_graph_helper <- function(step_graph, to = NULL, from = NULL, ids = NULL) {
     args <- c("ids", "to", "from")
     supplied_args <- args[
@@ -119,20 +119,25 @@ sub_step_graph_helper <- function(step_graph, to = NULL, from = NULL, ids = NULL
 }
 
 #' @keywords internal
-#' @noRd 
+#' @noRd
 build_step_graph_helper <- function(step_list, add_attrs = FALSE) {
-    if (!length(step_list)) return(igraph::make_empty_graph(directed = TRUE))
+    if (!length(step_list)) {
+        return(igraph::make_empty_graph(directed = TRUE))
+    }
     step_deps <- lapply(step_list, function(x) {
-        deps <- x[["deps"]]
-        if (!length(deps) || all(is.na(deps) | deps == "")) {
+        deps <- unique(x$deps)
+        deps <- deps[!is.na(deps) & deps != ""]
+        if (!length(deps)) {
             return(NA_character_)
         }
-        deps[!is.na(deps)]
+        deps
     })
     edge_df <- data.frame(
         from = unlist(step_deps, use.names = FALSE),
         to = rep(names(step_deps), lengths(step_deps))
     )
+
+    # extract all node names
     nodes <- unique(c(edge_df$from, edge_df$to))
     nodes <- nodes[!is.na(nodes)]
     node_df <- data.frame(nodes = nodes)
@@ -171,9 +176,12 @@ add_step_graph_attrs <- function(step_graph, step_list, step_deps) {
     is_existed <- nodes %in% names(step_list) # nolint
 
     # define step levels
-    levels <- define_step_levels(step_deps = step_deps)[nodes] # nolint
-
-    for (attr in c("is_finished", "is_existed", "levels")) {
+    step_levels <- define_step_levels(
+        ids = names(step_deps),
+        step_deps = step_deps
+    )
+    step_levels <- step_levels[nodes]
+    for (attr in c("is_finished", "is_existed", "step_levels")) {
         step_graph <- igraph::set_vertex_attr(
             step_graph,
             name = attr,
@@ -191,16 +199,6 @@ add_step_graph_attrs <- function(step_graph, step_list, step_deps) {
 #' @noRd
 #' @keywords internal
 define_step_levels <- function(ids = NULL, step_deps) {
-    if (is.null(ids)) {
-        ids <- names(step_deps)
-    } else {
-        missing_ids <- setdiff(ids, names(step_deps))
-        if (length(missing_ids)) {
-            cli::cli_abort(
-                "Can't find {.field {missing_ids}} in {.var step_tree}"
-            )
-        }
-    }
     levels <- structure(vector("list", length(ids)), names = ids)
 
     #' 1. if a dependence is not in `names(step_deps)`, which occured when the
@@ -277,10 +275,10 @@ define_step_levels <- function(ids = NULL, step_deps) {
 #     step$deps <- union(setdiff(step$deps, from), to)
 #     # change the call by transforming the symbol returned by "from" step
 #     # into symbol returned by "to" step
-#     step$expression <- rlang::set_expr(
-#         step$expression,
+#     step$expr <- rlang::set_expr(
+#         step$expr,
 #         value = change_expr(
-#             step$expression,
+#             step$expr,
 #             from = rlang::sym(symbol_list[[1L]]),
 #             to = rlang::sym(symbol_list[[2L]])
 #         )

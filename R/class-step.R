@@ -8,7 +8,7 @@
 #'
 #' @param id A scalar character indicates the identification of the step. Must
 #' be unique across the `step_tree`.
-#' @param expression The expression define the command to run. Function `step`
+#' @param expr The expression define the command to run. Function `step`
 #'   will use <[`rlang::enquo()`]> to defuse this argument. Details see
 #'   [is_expression][rlang::is_expression]
 #' @param deps A character vector or `NULL` defines the upstream steps to run
@@ -27,9 +27,9 @@
 #' @return A `step` object.
 #' @export
 #' @name step
-step <- function(id, expression, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
+step <- function(id, expr, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
     create_step(
-        id = id, expression = rlang::enquo(expression), deps = deps,
+        id = id, expr = rlang::enquo(expr), deps = deps,
         finished = finished, return = return, seed = seed,
         ...
     )
@@ -37,9 +37,9 @@ step <- function(id, expression, deps = NULL, finished = FALSE, return = TRUE, s
 
 #' @export
 #' @rdname step
-create_step <- function(id, expression, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
+create_step <- function(id, expr, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
     x <- rlang::dots_list(
-        id = id, expression = expression,
+        id = id, expr = expr,
         deps = deps, finished = finished,
         return = return, seed = seed,
         ...,
@@ -70,12 +70,12 @@ validate_step <- function(x) {
     reserved_names <- c(".data", ".pipeline", ".step")
     if (is.na(step$id) || step$id == "") {
         cli::cli_abort("{.arg step$id} can't use {.val } or {.code NA_character_}")
-    } else if (step$id %in% reserved_names) {
+    } else if (any(step$id == reserved_names)) {
         cli::cli_abort("{.arg id} can't use reserved names {.val {reserved_names}}")
     }
 
-    # assert expression
-    assert_class(step$expression, rlang::is_expression,
+    # assert expr
+    assert_class(step$expr, rlang::is_expression,
         class = "expression", null_ok = FALSE
     )
 
@@ -97,9 +97,8 @@ validate_step <- function(x) {
     }
 
     # assert seed
-    if (!(rlang::is_scalar_logical(step$seed) ||
-        rlang::is_scalar_double(step$seed) ||
-        rlang::is_scalar_integer(step$seed))) {
+    if (!(length(step$seed) == 1L && (is.logical(step$seed) ||
+        is.numeric(step$seed)))) {
         cli::cli_abort("{.arg step$seed} must be a scalar {.cls logical} or {.cls numeric}")
     }
     if (is.na(step$seed)) {

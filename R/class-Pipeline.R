@@ -146,15 +146,16 @@ Pipeline <- R6::R6Class("Pipeline",
         },
         #' @description Label all steps in the `step_collections` as unfinished.
         reset_step_collections = function() {
-            ids <- private$get_ids()
-            private$set_steps_state(ids = ids, value = FALSE)
+            private$set_steps_state(ids = private$get_ids(), value = FALSE)
             invisible(self)
         },
 
         #' @description
         #' Label the step as finished.
         finish_steps = function(ids) {
-            assert_class(id, is.character, class = "character", null_ok = FALSE)
+            assert_class(ids, is.character,
+                class = "character", null_ok = FALSE
+            )
             private$assert_ids_exist(ids)
             private$set_steps_state(ids, value = TRUE)
             invisible(self)
@@ -184,21 +185,21 @@ Pipeline <- R6::R6Class("Pipeline",
         #'   Use [`zap()`] to remove arguments. Empty arguments are preserved.
         modify_call = function(id, ..., reset = TRUE) {
             step <- self$get_step(id)
-            if (!rlang::is_call(step$expression)) {
+            if (!rlang::is_call(step$expr)) {
                 cli::cli_abort(c(
                     "the expression of the step must be a {.cls call} object",
-                    x = "You've supplied a step with a {.cls {typeof(step$expression)}} expression"
+                    x = "You've supplied a step with a {.cls {typeof(step$expr)}} expression"
                 ))
             }
             dots <- rlang::dots_list(...)
             if (length(dots)) {
-                step$expression <- rlang::set_expr(
-                    step$expression,
-                    call_standardise(step$expression)
+                step$expr <- rlang::set_expr(
+                    step$expr,
+                    call_standardise(step$expr)
                 )
-                step$expression <- rlang::set_expr(
-                    step$expression,
-                    rlang::call_modify(step$expression, !!!dots)
+                step$expr <- rlang::set_expr(
+                    step$expr,
+                    rlang::call_modify(step$expr, !!!dots)
                 )
                 private$step_collections[[id]] <- step
                 if (isTRUE(reset)) {
@@ -279,8 +280,8 @@ Pipeline <- R6::R6Class("Pipeline",
         run_targets = function(targets = NULL, refresh = FALSE, envir = caller_env()) {
             # build dependencies graph
             step_graph <- private$build_step_graph(add_attrs = TRUE)
-            attrs <- igraph::vertex_attr(step_graph)[c("name", "levels")]
-            step_levels <- structure(attrs$levels, names = attrs$name)
+            attrs <- igraph::vertex_attr(step_graph)[c("name", "step_levels")]
+            step_levels <- structure(attrs$step_levels, names = attrs$name)
 
             # targets are the steps we want to run until if NULL, all steps
             # without child steps will be used

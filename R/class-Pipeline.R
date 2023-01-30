@@ -461,19 +461,14 @@ Pipeline <- R6::R6Class("Pipeline",
             } else {
                 result <- NULL
             }
-            private$set_step_state(id, value = TRUE)
+            private$set_steps_state(id, value = TRUE)
             result
-        },
-
-        ### label step as finished or unfinished
-        set_step_state = function(id, value) {
-            private$step_collections[[id]]$finished <- value
         },
 
         ### label steps or downstream steps (depend on it) as finished or unfinished
         set_steps_state = function(ids, value) {
             for (id in ids) {
-                private$set_step_state(id = id, value = value)
+                private$step_collections[[id]]$finished <- value
             }
         },
         set_downstream_state = function(ids, value) {

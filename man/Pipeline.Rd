@@ -251,7 +251,7 @@ step) as unfinished.}
 \if{html}{\out{<a id="method-Pipeline-modify_call"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-modify_call}{}}}
 \subsection{Method \code{modify_call()}}{
-If the expression in the step is a call object, this provide a
+If the expression in the step is a \code{call} object, this provide a
 convenient way to modify the call argument.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$modify_call(id, ..., reset = TRUE)}\if{html}{\out{</div>}}
@@ -300,7 +300,7 @@ step_collections in the pipeline will be used to create the dependencies
 graph.}
 
 \item{\code{add_attrs}}{If \code{TRUE}, add "is_finished", "is_existed" and
-"levels" as the graph vertex attributes. Default: \code{FALSE}}
+"step_levels" as the graph vertex attributes. Default: \code{FALSE}}
 }
 \if{html}{\out{</div>}}
 }

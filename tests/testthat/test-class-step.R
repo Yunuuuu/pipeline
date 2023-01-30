@@ -31,12 +31,12 @@ test_that("`step` finished argument works", {
     expect_s3_class(step("a", paste(1, 2), finished = TRUE), "step")
 })
 
-test_that("`step` return argument works", {
-    expect_error(step("a", paste(1, 2), return = NULL))
-    expect_error(step("a", paste(1, 2), return = 1L))
-    expect_error(step("a", paste(1, 2), return = ""))
-    expect_error(step("a", paste(1, 2), return = NA))
-    expect_s3_class(step("a", paste(1, 2), return = TRUE), "step")
+test_that("`step` bind argument works", {
+    expect_error(step("a", paste(1, 2), bind = NULL))
+    expect_error(step("a", paste(1, 2), bind = 1L))
+    expect_error(step("a", paste(1, 2), bind = ""))
+    expect_error(step("a", paste(1, 2), bind = NA))
+    expect_s3_class(step("a", paste(1, 2), bind = TRUE), "step")
 })
 
 test_that("`step` seed argument works", {

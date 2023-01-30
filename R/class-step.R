@@ -15,8 +15,11 @@
 #' before runing this step. `NULL` means no dependencies.
 #' @param finished A scalar `logical` indicates whether this step has been
 #' evaluated.
-#' @param return A scalar `logical` indicates whether to keep the returned
-#' value. if `FALSE`, the result evaluated from `expression` won't be kept.
+#' @param bind A scalar `logical` indicates whether to keep the returned value
+#' (bind the symbol named with id to the result in the specific environment
+#' usually the pipeline internal environment). if `FALSE`, the result evaluated
+#' from `expr` won't be kept. The evaluation of the step expression in the
+#' pipeline will always return `NULL`.
 #' @param seed A scalar `logical` or `numeric`. a `logical` value indicates
 #' whether to set seed when evaluated the "expression". if `TRUE`, the
 #' expression is evaluated with a seed (based on the hash of the expression
@@ -27,21 +30,21 @@
 #' @return A `step` object.
 #' @export
 #' @name step
-step <- function(id, expr, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
+step <- function(id, expr, deps = NULL, finished = FALSE, bind = TRUE, seed = FALSE, ...) {
     create_step(
         id = id, expr = rlang::enquo(expr), deps = deps,
-        finished = finished, return = return, seed = seed,
+        finished = finished, bind = bind, seed = seed,
         ...
     )
 }
 
 #' @export
 #' @rdname step
-create_step <- function(id, expr, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...) {
+create_step <- function(id, expr, deps = NULL, finished = FALSE, bind = TRUE, seed = FALSE, ...) {
     x <- rlang::dots_list(
         id = id, expr = expr,
         deps = deps, finished = finished,
-        return = return, seed = seed,
+        bind = bind, seed = seed,
         ...,
         .homonyms = "error"
     )
@@ -89,11 +92,11 @@ validate_step <- function(x) {
         cli::cli_abort("{.arg step$finished} can't use {.code NA}")
     }
 
-    # assert return
-    assert_class(step$return, is.logical, class = "logical", null_ok = FALSE)
-    assert_length(step$return, 1L, null_ok = FALSE)
-    if (is.na(step$return)) {
-        cli::cli_abort("{.arg step$return} can't use {.code NA_character_}")
+    # assert bind
+    assert_class(step$bind, is.logical, class = "logical", null_ok = FALSE)
+    assert_length(step$bind, 1L, null_ok = FALSE)
+    if (is.na(step$bind)) {
+        cli::cli_abort("{.arg step$bind} can't use {.code NA_character_}")
     }
 
     # assert seed

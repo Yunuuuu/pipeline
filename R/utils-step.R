@@ -42,10 +42,7 @@ eval_step <- function(step, mask, pipeline = NULL, envir = caller_env()) {
     }
 
     # install .step referring to the step itself
-    other_items <- step[setdiff(
-        names(step), c("id", "expression", "deps", "finished", "return", "seed")
-    )]
-    mask$.step <- rlang::as_data_pronoun(other_items)
+    mask$.step <- rlang::as_data_pronoun(unclass(step))
 
     # then we run the command attached with this step
     rlang::eval_tidy(step$expr, data = mask, env = envir)

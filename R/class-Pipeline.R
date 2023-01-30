@@ -178,7 +178,7 @@ Pipeline <- R6::R6Class("Pipeline",
         },
 
         #' @description
-        #' If the expression in the step is a call object, this provide a
+        #' If the expression in the step is a `call` object, this provide a
         #' convenient way to modify the call argument.
         #' @param ... <[`dynamic-dots`][rlang::dyn-dots]>, Named or unnamed
         #'   expressions (constants, names or calls) used to modify the call.
@@ -211,7 +211,7 @@ Pipeline <- R6::R6Class("Pipeline",
 
         #' @description Build step dependencies network as an graph object
         #' @param add_attrs If `TRUE`, add "is_finished", "is_existed" and
-        #'   "levels" as the graph vertex attributes. Default: `FALSE`
+        #'   "step_levels" as the graph vertex attributes. Default: `FALSE`
         #' @return A igraph object.
         get_step_graph = function(to = NULL, from = NULL, ids = NULL, add_attrs = FALSE) {
             # assert to argument
@@ -437,7 +437,7 @@ Pipeline <- R6::R6Class("Pipeline",
             # if this step has been finished, and refresh is FALSE
             # Just return the value from the environment
             if (step$finished && !isTRUE(refresh)) {
-                if (step$return) {
+                if (step$bind) {
                     if (exists(id, where = private$envir, inherits = FALSE)) {
                         return(private$envir[[id]])
                     } else {
@@ -456,7 +456,7 @@ Pipeline <- R6::R6Class("Pipeline",
                 envir = envir
             )
 
-            if (step$return) {
+            if (step$bind) {
                 private$env_bind_internal(!!id := result)
             } else {
                 result <- NULL

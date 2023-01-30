@@ -2,7 +2,7 @@ step_unbind <- function(nms, deps = NULL) {
     nms <- rlang::enquo(nms)
     create_step(
         id = "unbind",
-        expression = rlang::expr(.pipeline$env_unbind(nms = !!nms)),
+        expr = rlang::expr(.pipeline$env_unbind(nms = !!nms)),
         deps = deps, finished = FALSE, return = FALSE, seed = FALSE
     )
 }

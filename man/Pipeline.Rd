@@ -4,10 +4,12 @@
 \alias{Pipeline}
 \title{R6 Class Representing Pipeline}
 \description{
-A Pipeline object, which is bound with a step_collections and a
-environment, provides methods to run the steps in the attached environment.
+A Pipeline object, is bound with two environment, of which one
+for the collections of steps (step_collections) and another for the
+accommodation of objects to run steps or the objects returned by the steps.
+
 In this way, we can bind all steps used in a pipeline and their dependant
-evaluation frame in a object.
+evaluation frame in one object.
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -20,7 +22,7 @@ evaluation frame in a object.
 \item \href{#method-Pipeline-remove_steps}{\code{Pipeline$remove_steps()}}
 \item \href{#method-Pipeline-reset_steps}{\code{Pipeline$reset_steps()}}
 \item \href{#method-Pipeline-reset_step_collections}{\code{Pipeline$reset_step_collections()}}
-\item \href{#method-Pipeline-finish_step}{\code{Pipeline$finish_step()}}
+\item \href{#method-Pipeline-finish_steps}{\code{Pipeline$finish_steps()}}
 \item \href{#method-Pipeline-modify_step}{\code{Pipeline$modify_step()}}
 \item \href{#method-Pipeline-modify_call}{\code{Pipeline$modify_call()}}
 \item \href{#method-Pipeline-get_step_graph}{\code{Pipeline$get_step_graph()}}
@@ -128,7 +130,7 @@ A list of step object.
 \if{html}{\out{<a id="method-Pipeline-add_steps"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-add_steps}{}}}
 \subsection{Method \code{add_steps()}}{
-Add new steps in the \code{Pipeline} step_collections.
+Add new steps into the \code{Pipeline} step_collections.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$add_steps(..., reset = TRUE)}\if{html}{\out{</div>}}
 }
@@ -193,24 +195,30 @@ on current step) as unfinished.}
 \if{html}{\out{<a id="method-Pipeline-reset_step_collections"></a>}}
 \if{latex}{\out{\hypertarget{method-Pipeline-reset_step_collections}{}}}
 \subsection{Method \code{reset_step_collections()}}{
+Label all steps in the \code{step_collections} as unfinished.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pipeline$reset_step_collections()}\if{html}{\out{</div>}}
 }
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Pipeline-finish_step"></a>}}
-\if{latex}{\out{\hypertarget{method-Pipeline-finish_step}{}}}
-\subsection{Method \code{finish_step()}}{
+\if{html}{\out{<a id="method-Pipeline-finish_steps"></a>}}
+\if{latex}{\out{\hypertarget{method-Pipeline-finish_steps}{}}}
+\subsection{Method \code{finish_steps()}}{
 Label the step as finished.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$finish_step(id)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$finish_steps(ids)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{id}}{A scalar character of the step name.}
+\item{\code{ids}}{Should be an atomic character, the steps used to form the step
+dependencies graph, this is passed into the \code{vids} argument of
+\link[igraph:subgraph]{subgraph}. Only one or none of "to", "from", "ids" can be
+specified. If all "ids", "from" and "to" arguments are \code{NULL}, the whole
+step_collections in the pipeline will be used to create the dependencies
+graph.}
 }
 \if{html}{\out{</div>}}
 }

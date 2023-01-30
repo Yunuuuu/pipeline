@@ -11,19 +11,11 @@
 \alias{[<-.step}
 \title{Build a \code{step} object}
 \usage{
-step(
-  id,
-  expression,
-  deps = NULL,
-  finished = FALSE,
-  return = TRUE,
-  seed = FALSE,
-  ...
-)
+step(id, expr, deps = NULL, finished = FALSE, return = TRUE, seed = FALSE, ...)
 
 create_step(
   id,
-  expression,
+  expr,
   deps = NULL,
   finished = FALSE,
   return = TRUE,
@@ -47,7 +39,7 @@ create_step(
 \item{id}{A scalar character indicates the identification of the step. Must
 be unique across the \code{step_tree}.}
 
-\item{expression}{The expression define the command to run. Function \code{step}
+\item{expr}{The expression define the command to run. Function \code{step}
 will use <\code{\link[rlang:enquo]{rlang::enquo()}}> to defuse this argument. Details see
 \link[rlang:is_expression]{is_expression}}
 

@@ -8,9 +8,11 @@
 #'
 #' @param id A scalar character indicates the identification of the step. Must
 #' be unique across the `step_tree`.
-#' @param expr The expression define the command to run. Function `step`
-#'   will use <[`rlang::enquo()`]> to defuse this argument. Details see
-#'   [is_expression][rlang::is_expression]
+#' @param expr The expression define the command to run. Expression includes
+#'   symbols, function calls, scalar atomic objects and NULL (Non-standard ASTs
+#'   are also regarded as expression). Function `step` will use
+#'   <[`rlang::enquo()`]> to defuse this argument. Details see
+#'   [is_expression][rlang::is_expression] and [is_call][rlang::is_call]
 #' @param deps A character vector or `NULL` defines the upstream steps to run
 #' before runing this step. `NULL` means no dependencies.
 #' @param finished A scalar `logical` indicates whether this step has been
@@ -56,7 +58,7 @@ create_step <- function(id, expr, deps = NULL, finished = FALSE, bind = TRUE, se
 #' @noRd
 new_step <- function(x) {
     stopifnot(is.list(x))
-    structure(x, class = c("step", "Pipeline"))
+    structure(x, class = "step")
 }
 
 validate_step <- function(x) {
@@ -78,7 +80,8 @@ validate_step <- function(x) {
     }
 
     # assert expr
-    assert_class(step$expr, rlang::is_expression,
+    assert_class(step$expr,
+        function(x) rlang::is_expression(x) || rlang::is_call(x),
         class = "expression", null_ok = FALSE
     )
 

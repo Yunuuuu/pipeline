@@ -39,9 +39,11 @@ create_step(
 \item{id}{A scalar character indicates the identification of the step. Must
 be unique across the \code{step_tree}.}
 
-\item{expr}{The expression define the command to run. Function \code{step}
-will use <\code{\link[rlang:enquo]{rlang::enquo()}}> to defuse this argument. Details see
-\link[rlang:is_expression]{is_expression}}
+\item{expr}{The expression define the command to run. Expression includes
+symbols, function calls, scalar atomic objects and NULL (Non-standard ASTs
+are also regarded as expression). Function \code{step} will use
+<\code{\link[rlang:enquo]{rlang::enquo()}}> to defuse this argument. Details see
+\link[rlang:is_expression]{is_expression} and \link[rlang:is_call]{is_call}}
 
 \item{deps}{A character vector or \code{NULL} defines the upstream steps to run
 before runing this step. \code{NULL} means no dependencies.}

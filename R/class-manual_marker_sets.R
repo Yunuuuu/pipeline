@@ -77,7 +77,7 @@ print.marker_set <- function(x, ...) {
     cli::cli_text("Cell marker set derived from: {.url {attr(x, \"reference\")}}")
     cli::cli_rule("marker set details")
     # cat main markers if it exits
-    if ("main" %in% names(x)) {
+    if (any("main" == names(x))) {
         main_par_id <- cli::cli_par()
         cli::cli_text("Main cell types")
         main_item_lid <- cli::cli_ul()

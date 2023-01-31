@@ -201,12 +201,7 @@ define_step_levels <- function(ids = NULL, step_deps) {
     #' 3. Otherwise, the level of a step should be the max level among its
     #'    parent step nodes adding 1L.
     define_level <- function(id) {
-        if (!id %in% names(step_deps)) {
-            # `name` may contain the dependencies (parent step node) not in the
-            # step tree, in this way, we just return NA_integer_ value for the
-            #  the definition of this child step node.
-            value <- NA_integer_
-        } else {
+        if (any(id == names(step_deps))) {
             value <- levels[[id]]
             # if NULL, level is not defined for this step
             # we define the level based on its dependencies
@@ -224,6 +219,11 @@ define_step_levels <- function(ids = NULL, step_deps) {
                 }
                 levels[[id]] <<- value
             }
+        } else {
+            # `step` may contain the dependencies (parent step node) not in the
+            # step tree, in this way, we just return NA_integer_ value for  this
+            # child step node.
+            value <- NA_integer_
         }
         # always return the value, in this way, we can recursively in depth
         # across the dependencies tree.

@@ -62,10 +62,7 @@ build_step <- function(id, expr, step_param, default,
         )
     }
     step_param <- modify_list(default, step_param)
-    rlang::inject(create_step(
-        id = id, expr = expr,
-        !!!step_param
-    ))
+    rlang::inject(create_step(id = id, expr = expr, !!!step_param))
 }
 
 #' @param x A function argument from other function..

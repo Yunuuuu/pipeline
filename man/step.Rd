@@ -50,10 +50,10 @@ before runing this step. \code{NULL} means no dependencies.}
 evaluated.}
 
 \item{bind}{A scalar \code{logical} indicates whether to keep the returned value
-(bind the symbol named with id to the result in the specific environment
-usually the pipeline internal environment). if \code{FALSE}, the result evaluated
-from \code{expr} won't be kept. The evaluation of the step expression in the
-pipeline will always return \code{NULL}.}
+(bind the symbol named with the step id to the result in the pipeline
+internal environment). if \code{FALSE}, the result evaluated from \code{expr} won't be
+kept. The evaluation of the step expression in the pipeline will always
+return \code{NULL}.}
 
 \item{seed}{A scalar \code{logical} or \code{numeric}. a \code{logical} value indicates
 whether to set seed when evaluated the "expression". if \code{TRUE}, the

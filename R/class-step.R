@@ -16,10 +16,10 @@
 #' @param finished A scalar `logical` indicates whether this step has been
 #' evaluated.
 #' @param bind A scalar `logical` indicates whether to keep the returned value
-#' (bind the symbol named with id to the result in the specific environment
-#' usually the pipeline internal environment). if `FALSE`, the result evaluated
-#' from `expr` won't be kept. The evaluation of the step expression in the
-#' pipeline will always return `NULL`.
+#' (bind the symbol named with the step id to the result in the pipeline
+#' internal environment). if `FALSE`, the result evaluated from `expr` won't be
+#' kept. The evaluation of the step expression in the pipeline will always
+#' return `NULL`.
 #' @param seed A scalar `logical` or `numeric`. a `logical` value indicates
 #' whether to set seed when evaluated the "expression". if `TRUE`, the
 #' expression is evaluated with a seed (based on the hash of the expression

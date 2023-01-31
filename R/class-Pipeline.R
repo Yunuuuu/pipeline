@@ -273,8 +273,7 @@ Pipeline <- R6::R6Class("Pipeline",
         },
         #' @description
         #' Running the steps until the target step
-        #' @param targets <[`tidy-select`][tidyselect::language]>, A set of
-        #'   targeted steps until which to run.
+        #' @param targets A set of targeted steps until which to run.
         #' @param envir The environment in which to evaluate the `expression` in
         #'   the step.
         run_targets = function(targets = NULL, refresh = FALSE, envir = caller_env()) {
@@ -286,14 +285,17 @@ Pipeline <- R6::R6Class("Pipeline",
             # targets are the steps we want to run until if NULL, all steps
             # without child steps will be used
             step_list <- private$get_step_list_internal(private$get_ids())
-            targets <- rlang::enquo(targets)
-            if (rlang::quo_is_null(targets)) {
+
+            assert_class(targets, is.character,
+                class = "character",
+                null_ok = FALSE
+            )
+            if (is.null(targets)) {
                 targets <- names(igraph::V(step_graph))[
                     igraph::degree(step_graph, mode = "out") == 0L
                 ]
             } else {
-                targets <- tidyselect::eval_select(targets, data = step_list)
-                targets <- names(step_list)[targets]
+                private$assert_ids_exist(targets)
             }
             results_list <- vector("list", length(targets))
             names(results_list) <- targets
@@ -406,7 +408,7 @@ Pipeline <- R6::R6Class("Pipeline",
             missing_ids <- setdiff(ids, private$get_ids())
             if (length(missing_ids)) {
                 cli::cli_abort(c(
-                    "Provided {.arg {arg}} must exist in the {.field step_collections}",
+                    "Provided {.arg {arg}} must exist in the {.cls Pipeline}",
                     x = "Missing ids: {.val {missing_ids}}"
                 ), call = call)
             }

@@ -385,8 +385,7 @@ Running the steps until the target step
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{targets}}{<\code{\link[tidyselect:language]{tidy-select}}>, A set of
-targeted steps until which to run.}
+\item{\code{targets}}{A set of targeted steps until which to run.}
 
 \item{\code{refresh}}{If \code{TRUE}, the step will be evaluated no matter wether the
 step has been finished or not. Otherwise the step will only be evaluated if

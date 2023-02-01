@@ -33,8 +33,7 @@ qsub <- function(..., node = NULL, name = NULL, wd = getwd(), resource_list = ch
         resource_list <- rename(resource_list, c(node = "h"))
     }
     if (!is.null(node)) {
-        resource_list <- resource_list[names(resource_list) !=
-            "h"]
+        resource_list <- resource_list[names(resource_list) != "h"]
         resource_list <- c(h = node, resource_list)
     }
     resource_has_name <- has_names(resource_list)

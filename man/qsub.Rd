@@ -4,10 +4,17 @@
 \alias{qsub}
 \title{Run expressions on a gridengine system}
 \usage{
-qsub(..., node = NULL, name = NULL, wd = getwd(), resource_list = character())
+qsub(
+  ...,
+  node = NULL,
+  name = NULL,
+  wd = getwd(),
+  resource_list = character(),
+  wait = FALSE
+)
 }
 \arguments{
-\item{...}{Expressions to defuse.}
+\item{...}{<\code{\link[rlang:dyn-dots]{dynamic-dots}}>, Expressions to defuse.}
 
 \item{node}{Node to run the expressions.}
 
@@ -16,6 +23,18 @@ qsub(..., node = NULL, name = NULL, wd = getwd(), resource_list = character())
 \item{wd}{Path define the working directory.}
 
 \item{resource_list}{A named characters define the given resources.}
+
+\item{wait}{A logical (not \code{NA}) indicating whether the R interpreter should
+wait for the command to finish, or run it asynchronously. When running the
+command asynchronously, no output will be displayed on the Rgui console in
+Windows (it will be dropped, instead).}
+}
+\value{
+If \code{wait = TRUE} the value is the exit status returned by the
+command, and if \code{wait = FALSE} it is \code{0} (the conventional success value). An
+error code (\code{0} for success), given the \link{invisible} attribute (so needs to be
+printed explicitly). If the command could not be run for any reason, the
+value is \code{127} and a warning is issued (as from R 3.5.0).
 }
 \description{
 Run expressions on a gridengine system

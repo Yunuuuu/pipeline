@@ -38,10 +38,13 @@ qsub <- function(..., node = NULL, name = NULL, wd = getwd(), resource_list = ch
         resource_list <- c(h = node, resource_list)
     }
     resource_has_name <- has_names(resource_list)
-    resource_list <- c(paste(names(resource_list[resource_has_name]),
-        resource_list[resource_has_name],
-        sep = "="
-    ), resource_list[!resource_has_name])
+    resource_list <- c(
+        paste(names(resource_list[resource_has_name]),
+            resource_list[resource_has_name],
+            sep = "="
+        ),
+        resource_list[!resource_has_name]
+    )
     if (length(resource_list)) {
         resource_list <- paste(resource_list, collapse = ",")
         itnernal_args <- c(itnernal_args, sprintf("-l %s", resource_list))

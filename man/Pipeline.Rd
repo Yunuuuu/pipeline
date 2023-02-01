@@ -354,7 +354,7 @@ graph.}
 \subsection{Method \code{run_step()}}{
 Running the step
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_step(id, refresh = FALSE, envir = caller_env())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_step(id, refresh = FALSE, envir = parent.frame())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -379,7 +379,7 @@ the step.}
 \subsection{Method \code{run_targets()}}{
 Running the steps until the target step
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_targets(targets = NULL, refresh = FALSE, envir = caller_env())}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pipeline$run_targets(targets = NULL, refresh = FALSE, envir = parent.frame())}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

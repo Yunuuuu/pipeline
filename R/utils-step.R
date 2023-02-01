@@ -5,7 +5,7 @@
 #' @param pipeline The pipeline object.
 #' @param envir The environment in which to evaluate step.
 #' @noRd
-eval_step <- function(step, mask, pipeline = NULL, envir = caller_env()) {
+eval_step <- function(step, mask, pipeline = NULL, envir = parent.frame()) {
     # if there is any seed, we set seed and then restore the existed seed in the
     # globalenv()
     if (isTRUE(step$seed) || is.numeric(step$seed)) {
@@ -54,7 +54,7 @@ eval_step <- function(step, mask, pipeline = NULL, envir = caller_env()) {
 #' @noRd
 build_step <- function(id, expr, step_param, default,
                        arg = rlang::caller_arg(step_param),
-                       call = rlang::caller_env()) {
+                       call = rlang::parent.frame()) {
     if (!all(has_names(step_param))) {
         cli::cli_abort(
             "All items in {.arg {arg}} must be named",
@@ -73,7 +73,7 @@ quo_or_symbol <- function(x) {
     x_symbol <- substitute(x)
     x_quo <- rlang::eval_bare(
         rlang::expr(rlang::enquo(!!x_symbol)),
-        env = rlang::caller_env()
+        env = rlang::parent.frame()
     )
     if (rlang::quo_is_missing(x_quo)) x_symbol else x_quo
 }

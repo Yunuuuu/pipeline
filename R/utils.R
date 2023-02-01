@@ -18,7 +18,7 @@ rlang::zap
 #'
 #' @keywords internal
 #' @noRd
-assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::caller_arg(x), call = caller_env()) {
+assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::caller_arg(x), call = parent.frame()) {
     message <- "{.cls {class}} object"
     if (null_ok) {
         message <- paste(message, "or {.code NULL}", sep = " ")
@@ -41,7 +41,7 @@ assert_class <- function(x, is_class, class, null_ok = FALSE, arg = rlang::calle
 #' Report if an argument has specific length
 #' @keywords internal
 #' @noRd
-assert_length <- function(x, length, null_ok = FALSE, arg = rlang::caller_arg(x), call = caller_env()) {
+assert_length <- function(x, length, null_ok = FALSE, arg = rlang::caller_arg(x), call = parent.frame()) {
     length <- as.integer(length)
     if (length == 1L) {
         message <- "{.field scalar} object"
@@ -121,7 +121,7 @@ modify_list <- function(x, replace) {
     x
 }
 
-check_dots_named <- function(..., call = caller_env()) {
+check_dots_named <- function(..., call = parent.frame()) {
     dots <- rlang::dots_list(..., .named = NULL, .homonyms = "error")
     if (!all(has_names(dots))) {
         cli::cli_abort(
@@ -133,7 +133,7 @@ check_dots_named <- function(..., call = caller_env()) {
 }
 
 # call object utils ----------------------------------------
-call_standardise <- function(call, env = caller_env()) {
+call_standardise <- function(call, env = parent.frame()) {
     expr <- rlang::get_expr(call)
     env <- rlang::get_env(call, env)
     fn <- rlang::eval_bare(rlang::node_car(expr), env)

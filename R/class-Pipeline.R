@@ -262,7 +262,7 @@ Pipeline <- R6::R6Class("Pipeline",
         #'
         #' @param envir The environment in which to evaluate the `expression` in
         #'   the step.
-        run_step = function(id, refresh = FALSE, envir = caller_env()) {
+        run_step = function(id, refresh = FALSE, envir = parent.frame()) {
             assert_class(id, is.character, class = "character", null_ok = FALSE)
             assert_length(id, 1L, null_ok = FALSE)
             private$assert_ids_exist(id)
@@ -276,7 +276,7 @@ Pipeline <- R6::R6Class("Pipeline",
         #' @param targets A set of targeted steps until which to run.
         #' @param envir The environment in which to evaluate the `expression` in
         #'   the step.
-        run_targets = function(targets = NULL, refresh = FALSE, envir = caller_env()) {
+        run_targets = function(targets = NULL, refresh = FALSE, envir = parent.frame()) {
             # build dependencies graph
             step_graph <- private$build_step_graph(add_attrs = TRUE)
             attrs <- igraph::vertex_attr(step_graph)[c("name", "step_levels")]
@@ -404,7 +404,7 @@ Pipeline <- R6::R6Class("Pipeline",
         step_collections = NULL, envir = NULL,
 
         ## For the usage of asserting the public method arguments
-        assert_ids_exist = function(ids, arg = rlang::caller_arg(ids), call = caller_env()) {
+        assert_ids_exist = function(ids, arg = rlang::caller_arg(ids), call = parent.frame()) {
             missing_ids <- setdiff(ids, private$get_ids())
             if (length(missing_ids)) {
                 cli::cli_abort(c(
@@ -434,7 +434,7 @@ Pipeline <- R6::R6Class("Pipeline",
         },
 
         ### run the step and return the result
-        run_step_internal = function(id, refresh = FALSE, envir = caller_env()) {
+        run_step_internal = function(id, refresh = FALSE, envir = parent.frame()) {
             step <- private$get_step_internal(id)
             # if this step has been finished, and refresh is FALSE
             # Just return the value from the environment

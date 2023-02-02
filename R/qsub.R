@@ -4,7 +4,7 @@
 #' @param node Node to run the expressions.
 #' @param name A string define the job name.
 #' @param wd Path define the working directory.
-#' @param resource_list A named characters define the given resources.
+#' @param resources A named characters define the given resources.
 #' @param wait A logical (not `NA`) indicating whether the R interpreter should
 #' wait for the command to finish, or run it asynchronously.
 #' @param globals (optional) a scalar logical, a character vector, or a named
@@ -19,7 +19,6 @@
 #' (NSE). (Default: "ignore").
 #' @param packages (optional) a character vector specifying packages
 #' to be attached in the qsub R session.
-#'
 #' @section Globals used by expressions:
 #' Global objects (short _globals_) are objects (e.g. variables and
 #' functions) that are needed in order for the expressions to be
@@ -127,7 +126,7 @@
 #' printed explicitly). If the command could not be run for any reason, the
 #' value is `127` and a warning is issued (as from R 3.5.0).
 #' @export
-qsub <- function(..., node = NULL, name = NULL, wd = getwd(), resource_list = character(), wait = FALSE, globals = TRUE, global_on_missing = c("ignore", "error"), packages = NULL) {
+qsub <- function(..., node = NULL, name = NULL, wd = getwd(), resources = character(), wait = FALSE, globals = TRUE, global_on_missing = c("ignore", "error"), packages = NULL) {
     qsub_core <- Sys.getenv("QSUB", unset = "", names = FALSE)
     if (!nzchar(qsub_core)) {
         qsub_core <- Sys.which("qsub")
@@ -142,24 +141,25 @@ qsub <- function(..., node = NULL, name = NULL, wd = getwd(), resource_list = ch
     if (!is.null(name)) {
         qsub_args <- c(qsub_args, sprintf("-N %s", name))
     }
-    if (rlang::has_name(resource_list, "node")) {
-        resource_list <- rename(resource_list, c(node = "h"))
+    assert_class(resources, is.character, "character", null_ok = TRUE)
+    if (rlang::has_name(resources, "node")) {
+        resources <- rename(resources, c(node = "h"))
     }
     if (!is.null(node)) {
-        resource_list <- resource_list[names(resource_list) != "h"]
-        resource_list <- c(h = node, resource_list)
+        resources <- resources[names(resources) != "h"]
+        resources <- c(h = node, resources)
     }
-    resource_has_name <- has_names(resource_list)
-    resource_list <- c(
-        paste(names(resource_list[resource_has_name]),
-            resource_list[resource_has_name],
+    resource_has_name <- has_names(resources)
+    resources <- c(
+        paste(names(resources[resource_has_name]),
+            resources[resource_has_name],
             sep = "="
         ),
-        resource_list[!resource_has_name]
+        resources[!resource_has_name]
     )
-    if (length(resource_list)) {
-        resource_list <- paste(resource_list, collapse = ",")
-        qsub_args <- c(qsub_args, sprintf("-l %s", resource_list))
+    if (length(resources)) {
+        resources <- paste(resources, collapse = ",")
+        qsub_args <- c(qsub_args, sprintf("-l %s", resources))
     }
     rscript_file <- tempfile(pattern = "r_qsub_", fileext = ".R")
     if (!file.exists(rscript_file)) {
@@ -173,7 +173,7 @@ qsub <- function(..., node = NULL, name = NULL, wd = getwd(), resource_list = ch
     )
     cli::cli_inform(c(
         "Submitting job with {.code qsub}",
-        "i" = "Rscript file (supporting the job): {.path {rscript_file}}"
+        "i" = "Rscript file path: {.path {rscript_file}}"
     ))
     system2(
         path.expand(qsub_core),
@@ -204,10 +204,26 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
     })
     exprs_chr <- unlist(exprs_chr, recursive = FALSE, use.names = FALSE)
 
-    # transfer global variabls into qsub R session
     globals <- gp$globals
+    pkgs <- gp$packages
+
+    # merge user-specied packages
+    assert_class(packages, is.character, "character", null_ok = TRUE)
+    if (length(packages) > 0 || length(pkgs) > 0L) {
+        pkgs <- unique(c(pkgs, packages))
+    }
+
+    # use current working dir as the tempdir?
+    # the temporary files will be removed
+    tempdir <- getwd()
+
+    # transfer global variabls into qsub R session
     if (length(globals) > 0L) {
-        global_file <- tempfile(pattern = "r_qsub_globals_", fileext = ".qs")
+        global_file <- tempfile(
+            pattern = "r_qsub_globals_",
+            tmpdir = tempdir,
+            fileext = ".qs"
+        )
         qs::qsave(globals, global_file)
         exprs_chr <- c(
             sprintf(
@@ -219,14 +235,12 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
     }
 
     # library pakcage in the qsub R session
-    pkgs <- gp$packages
-    assert_class(packages, is.character, "character", null_ok = TRUE)
-    if (length(packages) > 0 || length(pkgs) > 0L) {
-        pkgs <- unique(c(pkgs, packages))
-    }
-
     if (length(pkgs) > 0L) {
-        pkg_file <- tempfile(pattern = "r_qsub_packages_", fileext = ".qs")
+        pkg_file <- tempfile(
+            pattern = "r_qsub_packages_",
+            tmpdir = tempdir,
+            fileext = ".qs"
+        )
         qs::qsave(pkgs, pkg_file)
         exprs_chr <- c(
             sprintf(
@@ -274,7 +288,7 @@ get_globals_and_pkgs <- function(exprs, globals, global_on_missing = c("ignore",
             } else {
                 cli::cli_abort(c(
                     "Attribute {.field add} of {.arg globals} must be an atomic {character} or a named {.cls list} or a {.cls Globals} object", # nolint
-                    "x" = "You have supplied a {.cls {typeof(add)}}"
+                    "x" = "You have supplied a {.cls {typeof(add)}} object."
                 ))
             }
         }
@@ -320,7 +334,7 @@ get_globals_and_pkgs <- function(exprs, globals, global_on_missing = c("ignore",
         # is a Global object
         cli::cli_abort(c(
             "{.arg globals} must be an atomic {.cls character} or a scalar {.cls logical} or a named {.cls list} or a {.cls Globals} object", # nolint
-            "x" = "You have supplied a {.cls {typeof(globals)}}"
+            "x" = "You have supplied a {.cls {typeof(globals)}} object"
         ))
     }
 
@@ -346,7 +360,6 @@ get_globals_and_pkgs <- function(exprs, globals, global_on_missing = c("ignore",
                 }
             }
         }
-
         globals <- globals[keep]
 
         ## Now drop globals that are primitive functions or

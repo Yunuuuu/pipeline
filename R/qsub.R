@@ -226,10 +226,16 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
         )
         qs::qsave(globals, global_file)
         exprs_chr <- c(
+            "cli::cli_inform(\"Importing globals\")",
             sprintf(
-                "list2env(x = qs::qread(\"%s\"), envir = environment(NULL))", global_file
+                "invisible(list2env(x = qs::qread(\"%s\"), envir = environment(NULL)))",
+                global_file
             ),
-            sprintf("file.remove(\"%s\")", global_file),
+            sprintf(
+                "cli::cli_inform(\"Removing globals tempfile: {.file %s}\")",
+                global_file
+            ),
+            sprintf("invisible(file.remove(\"%s\"))", global_file),
             exprs_chr
         )
     }
@@ -243,11 +249,16 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
         )
         qs::qsave(pkgs, pkg_file)
         exprs_chr <- c(
+            "cli::cli_inform(\"librarying packages\")",
             sprintf(
                 "for (pkg in qs::qread(\"%s\")) library(pkg, character.only = TRUE)",
                 pkg_file
             ),
-            sprintf("file.remove(\"%s\")", pkg_file),
+            sprintf(
+                "cli::cli_inform(\"Removing packages tempfile: {.file %s}\")",
+                pkg_file
+            ),
+            sprintf("invisible(file.remove(\"%s\"))", pkg_file),
             exprs_chr
         )
     }

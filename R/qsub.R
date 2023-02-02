@@ -264,7 +264,8 @@ get_globals_and_pkgs <- function(exprs, globals, global_on_missing = c("ignore",
         add <- attr(globals, "add", exact = TRUE)
         if (!is.null(add)) {
             if (is.character(add)) {
-                add <- globals::globalsByName(add,
+                add <- globals::globalsByName(
+                    add,
                     envir = envir,
                     mustExist = must_exist
                 )
@@ -274,7 +275,7 @@ get_globals_and_pkgs <- function(exprs, globals, global_on_missing = c("ignore",
                 add <- globals::as.Globals(add)
             } else {
                 cli::cli_abort(c(
-                    "Attribute {.field add} of {.arg globals} must be a atomic {character} or a named {.cls list} or a {.cls Globals} object",
+                    "Attribute {.field add} of {.arg globals} must be an atomic {character} or a named {.cls list} or a {.cls Globals} object", # nolint
                     "x" = "You have supplied a {.cls {typeof(add)}}"
                 ))
             }
@@ -320,7 +321,7 @@ get_globals_and_pkgs <- function(exprs, globals, global_on_missing = c("ignore",
         # Global object is also a list so it's no need to check if globals
         # is a Global object
         cli::cli_abort(c(
-            "{.arg globals} must be a atomic {.cls character} or a scalar {.cls logical} or a named {.cls list} or a {.cls Globals} object",
+            "{.arg globals} must be an atomic {.cls character} or a scalar {.cls logical} or a named {.cls list} or a {.cls Globals} object", # nolint
             "x" = "You have supplied a {.cls {typeof(globals)}}"
         ))
     }

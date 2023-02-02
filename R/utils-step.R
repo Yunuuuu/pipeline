@@ -54,7 +54,7 @@ eval_step <- function(step, mask, pipeline = NULL, envir = parent.frame()) {
 #' @noRd
 build_step <- function(id, expr, step_param, default,
                        arg = rlang::caller_arg(step_param),
-                       call = rlang::parent.frame()) {
+                       call = parent.frame()) {
     if (!all(has_names(step_param))) {
         cli::cli_abort(
             "All items in {.arg {arg}} must be named",
@@ -73,7 +73,7 @@ quo_or_symbol <- function(x) {
     x_symbol <- substitute(x)
     x_quo <- rlang::eval_bare(
         rlang::expr(rlang::enquo(!!x_symbol)),
-        env = rlang::parent.frame()
+        env = parent.frame()
     )
     if (rlang::quo_is_missing(x_quo)) x_symbol else x_quo
 }

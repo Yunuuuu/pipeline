@@ -208,13 +208,12 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
     globals <- gp$globals
     if (length(globals) > 0L) {
         global_file <- tempfile(pattern = "r_qsub_globals_", fileext = ".qs")
-        attributes(globals) <- NULL
         qs::qsave(globals, global_file)
         exprs_chr <- c(
             sprintf(
-                "list2env(x = qs::qread(%s), envir = environment(NULL))", global_file
+                "list2env(x = qs::qread(\"%s\"), envir = environment(NULL))", global_file
             ),
-            sprintf("file.remove(%s)", global_file),
+            sprintf("file.remove(\"%s\")", global_file),
             exprs_chr
         )
     }
@@ -228,14 +227,13 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
 
     if (length(pkgs) > 0L) {
         pkg_file <- tempfile(pattern = "r_qsub_packages_", fileext = ".qs")
-        attributes(pkgs) <- NULL
         qs::qsave(pkgs, pkg_file)
         exprs_chr <- c(
             sprintf(
-                "for (pkg in qs::qread(%s)) library(pkg, character.only = TRUE)",
+                "for (pkg in qs::qread(\"%s\")) library(pkg, character.only = TRUE)",
                 pkg_file
             ),
-            sprintf("file.remove(%s)", pkg_file),
+            sprintf("file.remove(\"%s\")", pkg_file),
             exprs_chr
         )
     }

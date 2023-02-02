@@ -233,9 +233,10 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
             ),
             sprintf(
                 "cli::cli_inform(\"Removing globals tempfile: {.file %s}\")",
-                global_file
+                basename(global_file)
             ),
             sprintf("invisible(file.remove(\"%s\"))", global_file),
+            "cli::cat_line()",
             exprs_chr
         )
     }
@@ -256,9 +257,10 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
             ),
             sprintf(
                 "cli::cli_inform(\"Removing packages tempfile: {.file %s}\")",
-                pkg_file
+                basename(pkg_file)
             ),
             sprintf("invisible(file.remove(\"%s\"))", pkg_file),
+            "cli::cat_line()",
             exprs_chr
         )
     }

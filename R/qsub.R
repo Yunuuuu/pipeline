@@ -236,7 +236,7 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
                 basename(global_file)
             ),
             sprintf("invisible(file.remove(\"%s\"))", global_file),
-            "cli::cat_line()",
+            "cli::cli_inform(\"\")",
             exprs_chr
         )
     }
@@ -260,7 +260,7 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
                 basename(pkg_file)
             ),
             sprintf("invisible(file.remove(\"%s\"))", pkg_file),
-            "cli::cat_line()",
+            "cli::cli_inform(\"\")",
             exprs_chr
         )
     }

@@ -13,9 +13,12 @@ Imports:
     cli,
     data.table,
     digest,
+    globals,
     igraph,
+    qs,
     R6,
-    rlang (>= 0.4.11)
+    rlang (>= 0.4.11),
+    tools
 Suggests: 
     batchelor,
     roxygen2,
@@ -24,3 +27,4 @@ Suggests:
     testthat
 Depends: 
     R (>= 3.5.0)
+ByteCompile: true

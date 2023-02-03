@@ -161,10 +161,7 @@ qsub <- function(..., node = NULL, name = NULL, wd = getwd(), resources = charac
         resources <- paste(resources, collapse = ",")
         qsub_args <- c(qsub_args, sprintf("-l %s", resources))
     }
-    rscript_file <- tempfile(pattern = "r_qsub_", fileext = ".R")
-    if (!file.exists(rscript_file)) {
-        file.create(rscript_file, showWarnings = FALSE)
-    }
+    rscript_file <- set_cache_file(pattern = "r_qsub_", ext = ".R")
     insert_exprs_into_rscript(...,
         file = rscript_file,
         globals = globals,
@@ -213,61 +210,61 @@ insert_exprs_into_rscript <- function(..., file, globals, packages, global_on_mi
         pkgs <- unique(c(pkgs, packages))
     }
 
-    # use current working dir as the tempdir?
+    # use current working dir as the cache_dir?
     # the temporary files will be removed
-    tempdir <- getwd()
+    # cache_dir <- getwd()
 
     # transfer global variabls into qsub R session
     if (length(globals) > 0L) {
-        global_file <- tempfile(
-            pattern = "r_qsub_globals_",
-            tmpdir = tempdir,
-            fileext = ".qs"
-        )
+        global_file <- set_cache_file(pattern = "globals_", ext = ".qs")
         qs::qsave(globals, global_file)
-        exprs_chr <- c(
-            "cli::cli_inform(\"Importing globals\")",
-            sprintf(
-                "invisible(list2env(x = qs::qread(\"%s\"), envir = environment(NULL)))",
-                global_file
-            ),
-            sprintf(
-                "cli::cli_inform(\"Removing globals tempfile: {.file %s}\")",
-                basename(global_file)
-            ),
-            sprintf("invisible(file.remove(\"%s\"))", global_file),
-            "cli::cli_inform(\"\")",
-            exprs_chr
-        )
+        exprs_chr <- c(global_tmpl(global_file), exprs_chr)
     }
 
     # library pakcage in the qsub R session
     if (length(pkgs) > 0L) {
-        pkg_file <- tempfile(
-            pattern = "r_qsub_packages_",
-            tmpdir = tempdir,
-            fileext = ".qs"
-        )
+        pkg_file <- set_cache_file(pattern = "packages_", ext = ".qs")
         qs::qsave(pkgs, pkg_file)
-        exprs_chr <- c(
-            "cli::cli_inform(\"librarying packages\")",
-            sprintf(
-                "for (pkg in qs::qread(\"%s\")) library(pkg, character.only = TRUE)",
-                pkg_file
-            ),
-            sprintf(
-                "cli::cli_inform(\"Removing packages tempfile: {.file %s}\")",
-                basename(pkg_file)
-            ),
-            sprintf("invisible(file.remove(\"%s\"))", pkg_file),
-            "cli::cli_inform(\"\")",
-            exprs_chr
-        )
+        exprs_chr <- c(pkg_tmpl(pkg_file), exprs_chr)
     }
 
     file_con <- file(file)
     writeLines(exprs_chr, con = file_con, sep = "\n")
     close(file_con)
+}
+
+#' @keywords internal
+global_tmpl <- function(global_file) {
+    c(
+        "cli::cli_inform(\"Importing globals\")",
+        sprintf(
+            "invisible(list2env(x = qs::qread(\"%s\"), envir = environment(NULL)))",
+            global_file
+        ),
+        sprintf(
+            "cli::cli_inform(\"Removing globals tempfile: {.file %s}\")",
+            basename(global_file)
+        ),
+        sprintf("invisible(file.remove(\"%s\"))", global_file),
+        "cli::cli_inform(\"\")"
+    )
+}
+
+#' @keywords internal
+pkg_tmpl <- function(pkg_file) {
+    c(
+        "cli::cli_inform(\"librarying packages\")",
+        sprintf(
+            "for (pkg in qs::qread(\"%s\")) library(pkg, character.only = TRUE)",
+            pkg_file
+        ),
+        sprintf(
+            "cli::cli_inform(\"Removing packages tempfile: {.file %s}\")",
+            basename(pkg_file)
+        ),
+        sprintf("invisible(file.remove(\"%s\"))", pkg_file),
+        "cli::cli_inform(\"\")"
+    )
 }
 
 #' @keywords internal

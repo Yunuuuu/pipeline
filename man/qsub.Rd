@@ -9,7 +9,7 @@ qsub(
   node = NULL,
   name = NULL,
   wd = getwd(),
-  resource_list = character(),
+  resources = character(),
   wait = FALSE,
   globals = TRUE,
   global_on_missing = c("ignore", "error"),
@@ -26,7 +26,7 @@ Multiple expressions are run sequentially in the order the exist in \code{...}.}
 
 \item{wd}{Path define the working directory.}
 
-\item{resource_list}{A named characters define the given resources.}
+\item{resources}{A named characters define the given resources.}
 
 \item{wait}{A logical (not \code{NA}) indicating whether the R interpreter should
 wait for the command to finish, or run it asynchronously.}

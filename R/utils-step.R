@@ -48,23 +48,6 @@ eval_step <- function(step, mask, pipeline = NULL, envir = parent.frame()) {
     rlang::eval_tidy(step$expr, data = mask, env = envir)
 }
 
-#' @param step_param User provided step components to modify the default step
-#' items.
-#' @param default The default components for this step.
-#' @noRd
-build_step <- function(id, expr, step_param, default,
-                       arg = rlang::caller_arg(step_param),
-                       call = parent.frame()) {
-    if (!all(has_names(step_param))) {
-        cli::cli_abort(
-            "All items in {.arg {arg}} must be named",
-            call = call
-        )
-    }
-    step_param <- modify_list(default, step_param)
-    rlang::inject(create_step(id = id, expr = expr, !!!step_param))
-}
-
 #' @keywords internal
 #' @noRd
 sub_step_graph_helper <- function(step_graph, to = NULL, from = NULL, ids = NULL) {

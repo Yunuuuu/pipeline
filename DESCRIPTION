@@ -20,10 +20,6 @@ Imports:
     rlang (>= 0.4.11),
     tools
 Suggests: 
-    batchelor,
-    roxygen2,
-    scran,
-    scuttle,
     testthat
 Depends: 
     R (>= 3.5.0)

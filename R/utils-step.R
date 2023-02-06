@@ -65,19 +65,6 @@ build_step <- function(id, expr, step_param, default,
     rlang::inject(create_step(id = id, expr = expr, !!!step_param))
 }
 
-#' @param x A function argument from other function..
-#' @return A quosure object if it is not a missing defused argument, otherwise,
-#' a symbol of the argument name.
-#' @noRd
-quo_or_symbol <- function(x) {
-    x_symbol <- substitute(x)
-    x_quo <- rlang::eval_bare(
-        rlang::expr(rlang::enquo(!!x_symbol)),
-        env = parent.frame()
-    )
-    if (rlang::quo_is_missing(x_quo)) x_symbol else x_quo
-}
-
 #' @keywords internal
 #' @noRd
 sub_step_graph_helper <- function(step_graph, to = NULL, from = NULL, ids = NULL) {

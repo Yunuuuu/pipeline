@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/reference/test_package.html#special-files
 
 library(testthat)
-library(scp)
+library(pipeline)
 
-test_check("scp")
+test_check("pipeline")

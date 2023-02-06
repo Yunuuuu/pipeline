@@ -1,4 +1,18 @@
 #' R6 Class Representing Pipeline
+#' @param data A data list to build the attached environment which is
+#'   used to evaluate the variable in the step expression object. One
+#'   can also use `$env_bind` method to add new variable.
+#' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> all items must be a `step`
+#'   object. Names won't make any sense. Any duplicated steps (with duplicated
+#'   id) are only included once, the latter one will override the former. Can
+#'   also provide as a list of steps directly.
+#' @name pipeline
+#' @export 
+pipeline <- function(data = list(), ...) {
+    Pipeline$new(..., data = data)
+}
+
+#' R6 Class Representing Pipeline
 #'
 #' @description A Pipeline object, is bound with two environment, of which one
 #' for the collections of steps (step_collections) and another for the
@@ -6,6 +20,10 @@
 #'
 #' In this way, we can bind all steps used in a pipeline and their dependant
 #'   evaluation frame in one object.
+#' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> all items must be a `step`
+#'   object. Names won't make any sense. Any duplicated steps (with duplicated
+#'   id) are only included once, the latter one will override the former. Can
+#'   also provide as a list of steps directly.
 #' @param id A scalar character of the step name.
 #' @param step A [step] object.
 #' @param reset If `TRUE`, will label all downstream steps (depend on current
@@ -14,10 +32,6 @@
 #' step has been finished or not. Otherwise the step will only be evaluated if
 #' it has never been evaluated once, in which case, the result will be obtained
 #' directly from the last evaluated result.
-#' @param ...  <[`dynamic-dots`][rlang::dyn-dots]> all items must be a `step`
-#'   object. Names won't make any sense. Any duplicated steps (with duplicated
-#'   id) are only included once, the latter one will override the former. Can
-#'   also provide as a list of steps directly.
 #' @param to The step to start the search to create the step dependencies graph.
 #'   If `to` is specified, all steps from which the (to) step is reachable are
 #'   extracted. Only one or none of "to", "from", "ids" can be specified.
@@ -30,6 +44,7 @@
 #' specified. If all "ids", "from" and "to" arguments are `NULL`, the whole
 #' step_collections in the pipeline will be used to create the dependencies
 #' graph.
+#' @rdname pipeline
 Pipeline <- R6::R6Class("Pipeline",
     public = list(
         #' @description

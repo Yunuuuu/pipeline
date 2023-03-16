@@ -149,7 +149,7 @@ qsub <- function(..., node = NULL, name = NULL, wd = getwd(), resources = charac
         resources <- resources[names(resources) != "h"]
         resources <- c(h = node, resources)
     }
-    resource_has_name <- has_names(resources)
+    resource_has_name <- rlang::have_name(resources)
     resources <- c(
         paste(names(resources[resource_has_name]),
             resources[resource_has_name],

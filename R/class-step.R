@@ -65,7 +65,7 @@ validate_step <- function(x) {
     step <- unclass(x)
 
     # assert names
-    if (length(step) && !all(has_names(step))) {
+    if (!rlang::is_named2(step)) {
         cli::cli_abort("all items in {.cls step} must be named")
     }
 

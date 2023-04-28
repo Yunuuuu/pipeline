@@ -7,7 +7,7 @@
 #'   id) are only included once, the latter one will override the former. Can
 #'   also provide as a list of steps directly.
 #' @name pipeline
-#' @export 
+#' @export
 pipeline <- function(data = list(), ...) {
     Pipeline$new(..., data = data)
 }
@@ -182,8 +182,9 @@ Pipeline <- R6::R6Class("Pipeline",
         #'   indicates the components to replace in the `step`. `NULL` will be
         #'   kept, use [`zap()`] to remove a component from the step.
         modify_step = function(id, ..., reset = TRUE) {
+            check_dots_named()
             step <- self$get_step(id)
-            dots <- check_dots_named(...)
+            dots <- rlang::dots_list(..., .named = NULL, .homonyms = "error")
             step <- validate_step(new_step(modify_list(unclass(step), dots)))
             private$step_collections[[id]] <- step
             if (isTRUE(reset)) {

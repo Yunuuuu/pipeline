@@ -113,15 +113,17 @@ modify_list <- function(x, replace) {
     x
 }
 
-check_dots_named <- function(..., call = parent.frame()) {
-    dots <- rlang::dots_list(..., .named = NULL, .homonyms = "error")
-    if (!rlang::is_named2(dots)) {
-        cli::cli_abort(
-            "All elements in {.arg ...} must be named",
-            call = call
-        )
+check_dots_named <- function(envir = parent.frame(), call = parent.frame()) {
+    dots_len <- eval(quote(...length()), envir = envir)
+    if (dots_len > 0L) {
+        dots_name <- eval(quote(...names()), envir = envir)
+        if (is.null(dots_name) || any(dots_name == "")) {
+            cli::cli_abort(
+                "All elements in {.arg ...} must be named",
+                call = call
+            )
+        }
     }
-    dots
 }
 
 # call object utils ----------------------------------------
